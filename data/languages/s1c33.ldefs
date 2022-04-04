@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="S1C33"
+            endian="little"
+            size="32"
+            variant="PE"
+            version="1.0"
+            slafile="s1c33.sla"
+            processorspec="s1c33.pspec"
+            id="S1C33:LE:32:PE">
+    <description>Epson S1C33 Family C33 PE</description>
+    <compiler name="default" spec="s1c33.cspec" id="default"/>
+  </language>
+</language_definitions>

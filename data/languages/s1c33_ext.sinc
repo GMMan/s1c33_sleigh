@@ -1,0 +1,92 @@
+# S1C33 PE Core extended instructions (unexpand)
+# Sections refer to S5U1C33001C (C/C++ compiler) manual
+
+# 8.7.1 Arithmetic Operation Instructions
+
+:xadd %rx_lo,ext_imm     is class=6 & imm13; class=3 & op1=0 & imm6_hi & rx_lo
+    [ ext_imm=(imm13 << 6) | imm6_hi; ] {
+
+}
+
+:xadd %rx_lo,ext_imm     is dClass0=6 & dClass1=6 & dImm13_hi & dImm13_lo; class=3 & op1=0 & imm6_hi & rx_lo
+    [ ext_imm=(dImm13_hi << 19) | (dImm13_lo << 6) | imm6_hi; ] {
+
+}
+
+:xsub %rx_lo,ext_imm     is class=6 & imm13; class=3 & op1=1 & imm6_hi & rx_lo
+    [ ext_imm=(imm13 << 6) | imm6_hi; ] {
+
+}
+
+:xsub %rx_lo,ext_imm     is dClass0=6 & dClass1=6 & dImm13_hi & dImm13_lo; class=3 & op1=1 & imm6_hi & rx_lo
+    [ ext_imm=(dImm13_hi << 19) | (dImm13_lo << 6) | imm6_hi; ] {
+
+}
+
+
+# 8.7.2 Comparison Instructions
+
+:xcmp %rx_lo,ext_imm     is class=6 & imm13s; class=3 & op1=2 & sign6u & rx_lo
+    [ ext_imm=(imm13s << 6) | sign6u; ] {
+
+}
+
+:xcmp %rx_lo,ext_imm     is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=3 & op1=2 & sign6u & rx_lo
+    [ ext_imm=(dImm13s_hi << 19) | (dImm13_lo << 6) | sign6u; ] {
+
+}
+
+
+# 8.7.3 logic Operation Instructions
+
+:xand %rx_lo,ext_imm     is class=6 & imm13s; class=3 & op1=4 & sign6u & rx_lo
+    [ ext_imm=(imm13s << 6) | sign6u; ] {
+
+}
+
+:xand %rx_lo,ext_imm     is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=3 & op1=4 & sign6u & rx_lo
+    [ ext_imm=(dImm13s_hi << 19) | (dImm13_lo << 6) | sign6u; ] {
+
+}
+
+:xoor %rx_lo,ext_imm     is class=6 & imm13s; class=3 & op1=5 & sign6u & rx_lo
+    [ ext_imm=(imm13s << 6) | sign6u; ] {
+
+}
+
+:xoor %rx_lo,ext_imm     is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=3 & op1=5 & sign6u & rx_lo
+    [ ext_imm=(dImm13s_hi << 19) | (dImm13_lo << 6) | sign6u; ] {
+
+}
+
+:xxor %rx_lo,ext_imm     is class=6 & imm13s; class=3 & op1=6 & sign6u & rx_lo
+    [ ext_imm=(imm13s << 6) | sign6u; ] {
+
+}
+
+:xxor %rx_lo,ext_imm     is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=3 & op1=6 & sign6u & rx_lo
+    [ ext_imm=(dImm13s_hi << 19) | (dImm13_lo << 6) | sign6u; ] {
+
+}
+
+:xnot %rx_lo,ext_imm     is class=6 & imm13s; class=3 & op1=7 & sign6u & rx_lo
+    [ ext_imm=(imm13s << 6) | sign6u; ] {
+
+}
+
+:xnot %rx_lo,ext_imm     is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=3 & op1=7 & sign6u & rx_lo
+    [ ext_imm=(dImm13s_hi << 19) | (dImm13_lo << 6) | sign6u; ] {
+
+}
+
+
+# 8.7.4 Shift & Rotate Instructions
+# Skipped, since they're repeated shifts
+
+
+# 8.7.5 Data Transfer Instructions (between Stack and Register)
+
+:"xld.w" %rx_lo,ext_imm     is class=6 & imm13s; class=3 & op1=3 & sign6u & rx_lo
+    [ ext_imm=(imm13s << 6) | sign6u; ] {
+    
+}

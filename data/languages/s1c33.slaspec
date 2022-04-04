@@ -1,0 +1,658 @@
+# SLEIGH spec for Epson S1C33 PE Core
+
+define endian=little;
+define alignment=2;
+
+# Define spaces
+
+define space ram type=ram_space size=4 default;
+define space register type=register_space size=4;
+
+# General purpose registers
+define register offset=0 size=4
+    [r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15];
+
+# Special registers
+# Note: positions as indicated by diagram on chapter 2 of PE core manual
+define register offset=0x40 size=4
+    [psr sp alr ahr _ _ _ _ ttbr _ idir dbbr _ _ _ pc];
+
+# Processor status register components
+# Store these discretely, modelling after the ARM SLEIGH spec
+define register offset=0x80 size=1
+    [n_flag z_flag v_flag c_flag ie_flag _ _ _ il];
+
+
+define token instr(16)
+    # Shared
+    class=(13, 15)
+    rx_lo=(0, 3) # rd, rs, rb
+    sx=(0,3) # sd, ss
+    imm4_imm5l=(4, 7) # Class 1, 4 (2), 5 (1)
+    rx_hi=(4, 7)
+    imm6_hi=(4, 9) # Class 2, 3
+    sign6=(4, 9) signed # Class 3
+    sign6u=(4, 9) # unsigned for ext
+    op1=(10, 12) # Everything except class 1
+    op2=(8, 9) # Class 1, 4 (2), 5
+
+    # Zero bits
+    zero_03=(0, 3)
+    zero_23=(2, 3)
+    zero_33=(3, 3)
+    zero_55=(5, 5)
+
+    # Class 0
+    c0_op1=(9, 12)
+    c0_d=(8, 8)
+    c0_const=(4, 5)
+
+    # Class 0 (1)
+    c01_op2=(6, 7)
+    imm2=(0, 1)
+
+    # Class 0 (2)
+    c02_op2=(6, 8)
+
+    # Class 0 (3)
+    sign8=(0, 7) signed
+
+    # Class 1
+    c1_op1=(10, 12)
+
+    # Class 4 (1)
+    imm10=(0, 9)
+
+    # Class 5 (1)
+    imm3=(0, 2)
+    ss=(4,7)
+
+    # Class 5 (2)
+    op3=(6, 7)
+    imm6_lo=(0, 5)
+    imm5_lo=(0, 4)
+
+    # Class 6
+    imm13=(0, 12)
+    imm13s=(0, 12) signed
+;
+
+# For two ext instructions
+define token doubleInstr(32)
+    dClass0=(13, 15)
+    dImm13_hi=(0, 12)
+    dImm13s_hi=(0, 12) signed
+    dClass1=(29, 31)
+    dImm13_lo=(13, 28)
+;
+
+# Attach registers
+attach variables [rx_lo rx_hi] [r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15];
+attach variables [sx] [psr sp alr ahr _ _ _ _ ttbr _ idir dbbr _ _ _ pc];
+
+# pcodeops for entering states
+define pcodeop slp;
+define pcodeop halt;
+define pcodeop brk;
+define pcodeop int;
+
+# TODO: ext handling
+RelSign8: relAddr is sign8 [ relAddr=inst_start + sign8 * 2; ] { export *:4 relAddr; }
+DoubleImm5: imm5 is imm4_imm5l [ imm5=imm4_imm5l * 2; ] { export *:4 imm5; }
+
+
+# Instructions
+
+# Class 0 (1)
+
+:nop    is class=0 & c0_op1=0 & c0_d=0 & c01_op2=0 & c0_const=0 & zero_03=0 {
+    # nothing
+}
+
+:slp    is class=0 & c0_op1=0 & c0_d=0 & c01_op2=1 & c0_const=0 & zero_03=0 {
+    slp();
+}
+
+:halt   is class=0 & c0_op1=0 & c0_d=0 & c01_op2=2 & c0_const=0 & zero_03=0 {
+    halt();
+}
+
+:pushn %rx_lo   is class=0 & c0_op1=1 & c0_d=0 & c01_op2=0 & c0_const=0 & rx_lo {
+
+}
+
+:popn %rx_lo   is class=0 & c0_op1=1 & c0_d=0 & c01_op2=1 & c0_const=0 & rx_lo {
+
+}
+
+:jpr %rx_lo   is class=0 & c0_op1=1 & c0_d=0 & c01_op2=3 & c0_const=0 & rx_lo {
+
+}
+
+:"jpr.d" %rx_lo   is class=0 & c0_op1=1 & c0_d=1 & c01_op2=3 & c0_const=0 & rx_lo {
+
+}
+
+:brk    is class=0 & c0_op1=2 & c0_d=0 & c01_op2=0 & c0_const=0 & zero_03=0 {
+    brk();
+}
+
+:retd   is class=0 & c0_op1=2 & c0_d=0 & c01_op2=1 & c0_const=0 & zero_03=0 {
+
+}
+
+:int imm2    is class=0 & c0_op1=2 & c0_d=0 & c01_op2=2 & c0_const=0 & zero_23=0 & imm2 {
+    
+}
+
+:reti   is class=0 & c0_op1=2 & c0_d=0 & c01_op2=3 & c0_const=0 & zero_03=0 {
+
+}
+
+:call %rx_lo    is class=0 & c0_op1=3 & c0_d=0 & c01_op2=0 & c0_const=0 & rx_lo {
+
+}
+
+:ret   is class=0 & c0_op1=3 & c0_d=0 & c01_op2=1 & c0_const=0 & zero_03=0 {
+
+}
+
+:jp %rx_lo   is class=0 & c0_op1=3 & c0_d=0 & c01_op2=2 & c0_const=0 & rx_lo {
+
+}
+
+:"call.d" %rx_lo    is class=0 & c0_op1=3 & c0_d=1 & c01_op2=0 & c0_const=0 & rx_lo {
+
+}
+
+:"ret.d"   is class=0 & c0_op1=3 & c0_d=1 & c01_op2=1 & c0_const=0 & zero_03=0 {
+
+}
+
+:"jp.d" %rx_lo   is class=0 & c0_op1=3 & c0_d=1 & c01_op2=2 & c0_const=0 & rx_lo {
+
+}
+
+
+# Class 0 (2)
+
+:push %rx_lo   is class=0 & c0_op1=0 & c02_op2=0 & c0_const=1 & rx_lo {
+
+}
+
+:pop %rx_lo   is class=0 & c0_op1=0 & c02_op2=1 & c0_const=1 & rx_lo {
+
+}
+
+:pushs %sx   is class=0 & c0_op1=0 & c02_op2=2 & c0_const=1 & sx {
+
+}
+
+:pops %sx   is class=0 & c0_op1=0 & c02_op2=3 & c0_const=1 & sx {
+
+}
+
+:"ld.cf"    is class=0 & c0_op1=0 & c02_op2=7 & c0_const=1 & zero_03=0 {
+
+}
+
+
+# Class 0 (3)
+
+:jrgt RelSign8  is class=0 & c0_op1=4 & c0_d=0 & RelSign8 {
+
+}
+
+:"jrgt.d" RelSign8  is class=0 & c0_op1=4 & c0_d=1 & RelSign8 {
+
+}
+
+:jrge RelSign8  is class=0 & c0_op1=5 & c0_d=0 & RelSign8 {
+
+}
+
+:"jrge.d" RelSign8  is class=0 & c0_op1=5 & c0_d=1 & RelSign8 {
+
+}
+
+:jrlt RelSign8  is class=0 & c0_op1=6 & c0_d=0 & RelSign8 {
+
+}
+
+:"jrlt.d" RelSign8  is class=0 & c0_op1=6 & c0_d=1 & RelSign8 {
+
+}
+
+:jrle RelSign8  is class=0 & c0_op1=7 & c0_d=0 & RelSign8 {
+
+}
+
+:"jrle.d" RelSign8  is class=0 & c0_op1=7 & c0_d=1 & RelSign8 {
+
+}
+
+:jrugt RelSign8  is class=0 & c0_op1=8 & c0_d=0 & RelSign8 {
+
+}
+
+:"jrugt.d" RelSign8  is class=0 & c0_op1=8 & c0_d=1 & RelSign8 {
+
+}
+
+:jruge RelSign8  is class=0 & c0_op1=9 & c0_d=0 & RelSign8 {
+
+}
+
+:"jruge.d" RelSign8  is class=0 & c0_op1=9 & c0_d=1 & RelSign8 {
+
+}
+
+:jrult RelSign8  is class=0 & c0_op1=10 & c0_d=0 & RelSign8 {
+
+}
+
+:"jrult.d" RelSign8  is class=0 & c0_op1=10 & c0_d=1 & RelSign8 {
+
+}
+
+:jrule RelSign8  is class=0 & c0_op1=11 & c0_d=0 & RelSign8 {
+
+}
+
+:"jrule.d" RelSign8  is class=0 & c0_op1=11 & c0_d=1 & RelSign8 {
+
+}
+
+:jreq RelSign8  is class=0 & c0_op1=12 & c0_d=0 & RelSign8 {
+
+}
+
+:"jreq.d" RelSign8  is class=0 & c0_op1=12 & c0_d=1 & RelSign8 {
+
+}
+
+:jrne RelSign8  is class=0 & c0_op1=13 & c0_d=0 & RelSign8 {
+
+}
+
+:"jrne.d" RelSign8  is class=0 & c0_op1=13 & c0_d=1 & RelSign8 {
+
+}
+
+:call RelSign8  is class=0 & c0_op1=14 & c0_d=0 & RelSign8 {
+
+}
+
+:"call.d" RelSign8  is class=0 & c0_op1=14 & c0_d=1 & RelSign8 {
+
+}
+
+:jp RelSign8  is class=0 & c0_op1=15 & c0_d=0 & RelSign8 {
+
+}
+
+:"jp.d" RelSign8  is class=0 & c0_op1=15 & c0_d=1 & RelSign8 {
+
+}
+
+
+# Class 1
+
+:"ld.b" %rx_lo,[%rx_hi]    is class=1 & c1_op1=0 & op2=0 & rx_hi & rx_lo {
+
+}
+
+:"ld.b" %rx_lo,[%rx_hi]+    is class=1 & c1_op1=0 & op2=1 & rx_hi & rx_lo {
+
+}
+
+:add %rx_lo,%rx_hi   is class=1 & c1_op1=0 & op2=2 & rx_hi & rx_lo {
+
+}
+
+:srl %rx_lo,DoubleImm5     is class=1 & c1_op1=0 & op2=3 & DoubleImm5 & rx_lo {
+
+}
+
+:"ld.ub" %rx_lo,[%rx_hi]    is class=1 & c1_op1=1 & op2=0 & rx_hi & rx_lo {
+
+}
+
+:"ld.ub" %rx_lo,[%rx_hi]+    is class=1 & c1_op1=1 & op2=1 & rx_hi & rx_lo {
+
+}
+
+:sub %rx_lo,%rx_hi   is class=1 & c1_op1=1 & op2=2 & rx_hi & rx_lo {
+
+}
+
+:sll %rx_lo,DoubleImm5     is class=1 & c1_op1=1 & op2=3 & DoubleImm5 & rx_lo {
+
+}
+
+:"ld.h" %rx_lo,[%rx_hi]    is class=1 & c1_op1=2 & op2=0 & rx_hi & rx_lo {
+
+}
+
+:"ld.h" %rx_lo,[%rx_hi]+    is class=1 & c1_op1=2 & op2=1 & rx_hi & rx_lo {
+
+}
+
+:cmp %rx_lo,%rx_hi   is class=1 & c1_op1=2 & op2=2 & rx_hi & rx_lo {
+
+}
+
+:sra %rx_lo,DoubleImm5     is class=1 & c1_op1=2 & op2=3 & DoubleImm5 & rx_lo {
+
+}
+
+:"ld.uh" %rx_lo,[%rx_hi]    is class=1 & c1_op1=3 & op2=0 & rx_hi & rx_lo {
+
+}
+
+:"ld.uh" %rx_lo,[%rx_hi]+    is class=1 & c1_op1=3 & op2=1 & rx_hi & rx_lo {
+
+}
+
+:"ld.w" %rx_lo,%rx_hi   is class=1 & c1_op1=3 & op2=2 & rx_hi & rx_lo {
+
+}
+
+:sla %rx_lo,DoubleImm5     is class=1 & c1_op1=3 & op2=3 & DoubleImm5 & rx_lo {
+
+}
+
+:"ld.w" %rx_lo,[%rx_hi]    is class=1 & c1_op1=4 & op2=0 & rx_hi & rx_lo {
+
+}
+
+:"ld.w" %rx_lo,[%rx_hi]+    is class=1 & c1_op1=4 & op2=1 & rx_hi & rx_lo {
+
+}
+
+:and %rx_lo,%rx_hi   is class=1 & c1_op1=4 & op2=2 & rx_hi & rx_lo {
+
+}
+
+:rr %rx_lo,DoubleImm5     is class=1 & c1_op1=4 & op2=3 & DoubleImm5 & rx_lo {
+
+}
+
+:"ld.b" [%rx_hi],%rx_lo    is class=1 & c1_op1=5 & op2=0 & rx_hi & rx_lo {
+
+}
+
+:"ld.b" [%rx_hi]+,%rx_lo    is class=1 & c1_op1=5 & op2=1 & rx_hi & rx_lo {
+
+}
+
+:or %rx_lo,%rx_hi   is class=1 & c1_op1=5 & op2=2 & rx_hi & rx_lo {
+
+}
+
+:rl %rx_lo,DoubleImm5     is class=1 & c1_op1=5 & op2=3 & DoubleImm5 & rx_lo {
+
+}
+
+:"ld.h" [%rx_hi],%rx_lo    is class=1 & c1_op1=6 & op2=0 & rx_hi & rx_lo {
+
+}
+
+:"ld.h" [%rx_hi]+,%rx_lo    is class=1 & c1_op1=6 & op2=1 & rx_hi & rx_lo {
+
+}
+
+:xor %rx_lo,%rx_hi   is class=1 & c1_op1=6 & op2=2 & rx_hi & rx_lo {
+
+}
+
+:"ld.w" [%rx_hi],%rx_lo    is class=1 & c1_op1=7 & op2=0 & rx_hi & rx_lo {
+
+}
+
+:"ld.w" [%rx_hi]+,%rx_lo    is class=1 & c1_op1=7 & op2=1 & rx_hi & rx_lo {
+
+}
+
+:not %rx_lo,%rx_hi   is class=1 & c1_op1=7 & op2=2 & rx_hi & rx_lo {
+
+}
+
+
+# Class 2
+
+:"ld.b" %rx_lo,[%"sp"+imm6_hi]  is class=2 & op1=0 & imm6_hi & rx_lo {
+
+}
+
+:"ld.ub" %rx_lo,[%"sp"+imm6_hi]  is class=2 & op1=1 & imm6_hi & rx_lo {
+
+}
+
+:"ld.h" %rx_lo,[%"sp"+imm6_hi]  is class=2 & op1=2 & imm6_hi & rx_lo {
+
+}
+
+:"ld.uh" %rx_lo,[%"sp"+imm6_hi]  is class=2 & op1=3 & imm6_hi & rx_lo {
+
+}
+
+:"ld.w" %rx_lo,[%"sp"+imm6_hi]  is class=2 & op1=4 & imm6_hi & rx_lo {
+
+}
+
+:"ld.b" [%"sp"+imm6_hi],%rx_lo  is class=2 & op1=5 & imm6_hi & rx_lo {
+
+}
+
+:"ld.h" [%"sp"+imm6_hi],%rx_lo  is class=2 & op1=6 & imm6_hi & rx_lo {
+
+}
+
+:"ld.w" [%"sp"+imm6_hi],%rx_lo  is class=2 & op1=7 & imm6_hi & rx_lo {
+
+}
+
+
+# Class 3
+
+:add %rx_lo,imm6_hi     is class=3 & op1=0 & imm6_hi & rx_lo {
+
+}
+
+:sub %rx_lo,imm6_hi     is class=3 & op1=1 & imm6_hi & rx_lo {
+
+}
+
+:cmp %rx_lo,sign6     is class=3 & op1=2 & sign6 & rx_lo {
+
+}
+
+:"ld.w" %rx_lo,sign6     is class=3 & op1=3 & sign6 & rx_lo {
+
+}
+
+:and %rx_lo,sign6     is class=3 & op1=4 & sign6 & rx_lo {
+
+}
+
+:or %rx_lo,sign6     is class=3 & op1=5 & sign6 & rx_lo {
+
+}
+
+:xor %rx_lo,sign6     is class=3 & op1=6 & sign6 & rx_lo {
+
+}
+
+:not %rx_lo,sign6     is class=3 & op1=7 & sign6 & rx_lo {
+
+}
+
+
+# Class 4 (1)
+
+:add %"sp",imm10    is class=4 & op1=0 & imm10 {
+
+}
+
+:sub %"sp",imm10    is class=4 & op1=1 & imm10 {
+    
+}
+
+
+# Class 4 (2)
+
+:srl %rx_lo,imm4_imm5l  is class=4 & op1=2 & op2=0 & imm4_imm5l & rx_lo {
+
+}
+
+:srl %rx_lo,%rx_hi  is class=4 & op1=2 & op2=1 & rx_hi & rx_lo {
+    
+}
+
+:sll %rx_lo,imm4_imm5l  is class=4 & op1=3 & op2=0 & imm4_imm5l & rx_lo {
+
+}
+
+:sll %rx_lo,%rx_hi  is class=4 & op1=3 & op2=1 & rx_hi & rx_lo {
+    
+}
+
+:sra %rx_lo,imm4_imm5l  is class=4 & op1=4 & op2=0 & imm4_imm5l & rx_lo {
+
+}
+
+:sra %rx_lo,%rx_hi  is class=4 & op1=4 & op2=1 & rx_hi & rx_lo {
+    
+}
+
+:swap $rx_lo,%rx_hi     is class=4 & op1=4 & op2=2 & rx_hi & rx_lo {
+
+}
+
+:sla %rx_lo,imm4_imm5l  is class=4 & op1=5 & op2=0 & imm4_imm5l & rx_lo {
+
+}
+
+:sla %rx_lo,%rx_hi  is class=4 & op1=5 & op2=1 & rx_hi & rx_lo {
+    
+}
+
+:rr %rx_lo,imm4_imm5l  is class=4 & op1=6 & op2=0 & imm4_imm5l & rx_lo {
+
+}
+
+:rr %rx_lo,%rx_hi  is class=4 & op1=6 & op2=1 & rx_hi & rx_lo {
+    
+}
+
+:swaph %rx_lo,%rx_hi  is class=4 & op1=6 & op2=2 & rx_hi & rx_lo {
+    
+}
+
+:rl %rx_lo,imm4_imm5l  is class=4 & op1=7 & op2=0 & imm4_imm5l & rx_lo {
+
+}
+
+:rl %rx_lo,%rx_hi  is class=4 & op1=7 & op2=1 & rx_hi & rx_lo {
+    
+}
+
+
+# Class 5 (1)
+
+:"ld.w" %sx,%rx_hi  is class=5 & op1=0 & op2=0 & rx_hi & sx {
+
+}
+
+:"ld.b" %rx_lo,%rx_hi   is class=5 & op1=0 & op2=1 & rx_hi & rx_lo {
+
+}
+
+:"mlt.h" %rx_lo,%rx_hi  is class=5 & op1=0 & op2=2 & rx_hi & rx_lo {
+
+}
+
+:"ld.w" %rx_lo,%ss      is class=5 & op1=1 & op2=0 & ss & rx_lo {
+
+}
+
+:"ld.ub" %rx_lo,%rx_hi      is class=5 & op1=1 & op2=1 & rx_hi & rx_lo {
+
+}
+
+:"mltu.h" %rx_lo,%rx_hi  is class=5 & op1=1 & op2=2 & rx_hi & rx_lo {
+
+}
+
+:btst [%rx_hi],imm3     is class=5 & op1=2 & op2=0 & rx_hi & zero_33=0 & imm3 {
+
+}
+
+:"ld.h" %rx_lo,%rx_hi   is class=5 & op1=2 & op2=1 & rx_hi & rx_lo {
+
+}
+
+:"mlt.w" %rx_lo,%rx_hi  is class=5 & op1=2 & op2=2 & rx_hi & rx_lo {
+
+}
+
+:bclr [%rx_hi],imm3     is class=5 & op1=3 & op2=0 & rx_hi & zero_33=0 & imm3 {
+
+}
+
+:"ld.uh" %rx_lo,%rx_hi   is class=5 & op1=3 & op2=1 & rx_hi & rx_lo {
+
+}
+
+:"mltu.w" %rx_lo,%rx_hi  is class=5 & op1=3 & op2=2 & rx_hi & rx_lo {
+
+}
+
+:bset [%rx_hi],imm3     is class=5 & op1=4 & op2=0 & rx_hi & zero_33=0 & imm3 {
+
+}
+
+:"ld.c" %rx_lo,imm4_imm5l   is class=5 & op1=4 & op2=1 & imm4_imm5l & rx_lo {
+
+}
+
+:bnot [%rx_hi],imm3     is class=5 & op1=5 & op2=0 & rx_hi & zero_33=0 & imm3 {
+
+}
+
+:"ld.c" imm4_imm5l,%rx_lo  is class=5 & op1=5 & op2=1 & imm4_imm5l & rx_lo {
+
+}
+
+:adc %rx_lo,%rx_hi  is class=5 & op1=6 & op2=0 & rx_hi & rx_lo {
+
+}
+
+:sbc %rx_lo,%rx_hi  is class=5 & op1=7 & op2=0 & rx_hi & rx_lo {
+
+}
+
+
+# Class 5 (2)
+
+:"do.c" imm6_lo     is class=5 & op1=7 & op2=3 & op3=0 & imm6_lo {
+
+}
+
+:psrset imm5_lo       is class=5 & op1=7 & op2=3 & op3=1 & zero_55=0 & imm5_lo {
+
+}
+
+:psrclr imm5_lo       is class=5 & op1=7 & op2=3 & op3=2 & zero_55=0 & imm5_lo {
+
+}
+
+
+# Class 6
+
+:ext imm13      is class=6 & imm13 {
+
+}
+
+@include "s1c33_ext.sinc"
