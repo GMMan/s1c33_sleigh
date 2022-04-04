@@ -56,6 +56,7 @@ define token instr(16)
 
     # Class 0 (3)
     sign8=(0, 7) signed
+    sign8u=(0, 7)
 
     # Class 1
     c1_op1=(10, 12)
