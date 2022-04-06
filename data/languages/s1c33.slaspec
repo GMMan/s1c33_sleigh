@@ -22,12 +22,16 @@ define register offset=0x40 size=4
 define register offset=0x80 size=1
     [n_flag z_flag v_flag c_flag ie_flag _ _ _ il];
 
+# ext value holder
+define register offset=0x100 size=4 extContext;
+define register offset=0x104 size=4
+    [extContext_val];
 
 define token instr(16)
     # Shared
     class=(13, 15)
     rx_lo=(0, 3) # rd, rs, rb
-    sx=(0,3) # sd, ss
+    sd=(0,3)
     imm4_imm5l=(4, 7) # Class 1, 4 (2), 5 (1)
     rx_hi=(4, 7)
     imm6_hi=(4, 9) # Class 2, 3
@@ -53,6 +57,8 @@ define token instr(16)
 
     # Class 0 (2)
     c02_op2=(6, 8)
+    sx_reg=(0, 3)
+    sx=(0, 3)
 
     # Class 0 (3)
     sign8=(0, 7) signed
@@ -72,6 +78,7 @@ define token instr(16)
     op3=(6, 7)
     imm6_lo=(0, 5)
     imm5_lo=(0, 4)
+    psr_vreg=(0, 4)
 
     # Class 6
     imm13=(0, 12)
@@ -84,22 +91,45 @@ define token doubleInstr(32)
     dImm13_hi=(0, 12)
     dImm13s_hi=(0, 12) signed
     dClass1=(29, 31)
-    dImm13_lo=(13, 28)
+    dImm13_lo=(16, 28)
+;
+
+# Holds successive ext values for ext instructions with no assembler pseudo-instructions
+define context extContext
+    extContext_present=(0, 0)
 ;
 
 # Attach registers
 attach variables [rx_lo rx_hi] [r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15];
-attach variables [sx] [psr sp alr ahr _ _ _ _ ttbr _ idir dbbr _ _ _ pc];
+attach variables [sd] [psr sp alr ahr _ _ _ _ ttbr _ _ _ _ _ _ pc];
+attach variables [ss] [psr sp alr ahr _ _ _ _ ttbr _ idir dbbr _ _ _ pc];
+# pushs/pops display
+attach variables [sx_reg] [_ _ alr ahr _ _ _ _ _ _ _ _ _ _ _ _];
+# psrset/psrclr convenience
+attach variables [psr_vreg] [
+    n_flag z_flag v_flag c_flag ie_flag _ _ _ _ _ _ _ _ _ _ _
+    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+];
 
 # pcodeops for entering states
 define pcodeop slp;
 define pcodeop halt;
 define pcodeop brk;
 define pcodeop int;
+define pcodeop coproc_exec;
+define pcodeop coproc_load;
+define pcodeop coproc_store;
+define pcodeop coproc_get_flags;
 
-# TODO: ext handling
 RelSign8: relAddr is sign8 [ relAddr=inst_start + sign8 * 2; ] { export *:4 relAddr; }
-DoubleImm5: imm5 is imm4_imm5l [ imm5=imm4_imm5l * 2; ] { export *:4 imm5; }
+DoubleImm5: imm5 is imm4_imm5l [ imm5=imm4_imm5l + 16; ] { local tmp:4 = imm5; export tmp; }
+
+ExtContextClear:    is extContext_present=1
+    [ extContext_present=0; globalset(inst_next, extContext_present); ] {
+    extContext_val=0;
+}
+
+@include "s1c33_macros.sinc"
 
 
 # Instructions
@@ -127,533 +157,624 @@ DoubleImm5: imm5 is imm4_imm5l [ imm5=imm4_imm5l * 2; ] { export *:4 imm5; }
 }
 
 :jpr %rx_lo   is class=0 & c0_op1=1 & c0_d=0 & c01_op2=3 & c0_const=0 & rx_lo {
-
+    jpOp(inst_start + rx_lo);
 }
 
 :"jpr.d" %rx_lo   is class=0 & c0_op1=1 & c0_d=1 & c01_op2=3 & c0_const=0 & rx_lo {
-
+    delayslot(2);
+    jpOp(inst_start + rx_lo);
 }
 
 :brk    is class=0 & c0_op1=2 & c0_d=0 & c01_op2=0 & c0_const=0 & zero_03=0 {
+    # Actual implementation
+    #local dbg_base:4 = 0x60000;
+    #*[ram]:4 (dbg_base + 8) = inst_next;
+    #*[ram]:4 (dbg_base + 0xc) = r0;
+    #goto [dbg_base];
+
+    # Abstracted as pcodeop
     brk();
 }
 
 :retd   is class=0 & c0_op1=2 & c0_d=0 & c01_op2=1 & c0_const=0 & zero_03=0 {
-
+    local dbg_base:4 = 0x60000;
+    r0 = *[ram] (dbg_base + 0xc);
+    return [(dbg_base + 8)];
 }
 
 :int imm2    is class=0 & c0_op1=2 & c0_d=0 & c01_op2=2 & c0_const=0 & zero_23=0 & imm2 {
-    
+    # Actual implementation
+    #stackPush(&:4 inst_next);
+    #stackPush(psr); # Should pack properly here
+    #local exc_base:4 = * dbbr;
+    #goto [exc_base + imm2 * 4];
+
+    # Abstracted as pcodeop
+    ie_flag = 0;
+    int(imm2:1);
 }
 
 :reti   is class=0 & c0_op1=2 & c0_d=0 & c01_op2=3 & c0_const=0 & zero_03=0 {
-
+    stackPop(psr);
+    retOp();
 }
 
 :call %rx_lo    is class=0 & c0_op1=3 & c0_d=0 & c01_op2=0 & c0_const=0 & rx_lo {
-
+    callIndOp(rx_lo);
 }
 
 :ret   is class=0 & c0_op1=3 & c0_d=0 & c01_op2=1 & c0_const=0 & zero_03=0 {
-
+    retOp();
 }
 
 :jp %rx_lo   is class=0 & c0_op1=3 & c0_d=0 & c01_op2=2 & c0_const=0 & rx_lo {
-
+    jpIndOp(rx_lo);
 }
 
 :"call.d" %rx_lo    is class=0 & c0_op1=3 & c0_d=1 & c01_op2=0 & c0_const=0 & rx_lo {
-
+    callDIndOp(rx_lo);
 }
 
 :"ret.d"   is class=0 & c0_op1=3 & c0_d=1 & c01_op2=1 & c0_const=0 & zero_03=0 {
-
+    delayslot(2);
+    retdOp();
 }
 
 :"jp.d" %rx_lo   is class=0 & c0_op1=3 & c0_d=1 & c01_op2=2 & c0_const=0 & rx_lo {
-
+    delayslot(2);
+    jpIndOp(rx_lo);
 }
 
 
 # Class 0 (2)
 
 :push %rx_lo   is class=0 & c0_op1=0 & c02_op2=0 & c0_const=1 & rx_lo {
-
+    stackPush(rx_lo);
 }
 
 :pop %rx_lo   is class=0 & c0_op1=0 & c02_op2=1 & c0_const=1 & rx_lo {
-
+    stackPop(rx_lo);
 }
 
-:pushs %sx   is class=0 & c0_op1=0 & c02_op2=2 & c0_const=1 & sx {
-
+:pushs %sx_reg   is class=0 & c0_op1=0 & c02_op2=2 & c0_const=1 & sx=2 & sx_reg {
+    stackPush(alr);
 }
 
-:pops %sx   is class=0 & c0_op1=0 & c02_op2=3 & c0_const=1 & sx {
+:pushs %sx_reg   is class=0 & c0_op1=0 & c02_op2=2 & c0_const=1 & sx=3 & sx_reg {
+    stackPush(ahr);
+    stackPush(alr);
+}
 
+:pops %sx_reg   is class=0 & c0_op1=0 & c02_op2=3 & c0_const=1 & sx=2 & sx_reg {
+    stackPop(alr);
+}
+
+:pops %sx_reg   is class=0 & c0_op1=0 & c02_op2=3 & c0_const=1 & sx=3 & sx_reg {
+    stackPop(alr);
+    stackPop(ahr);
 }
 
 :"ld.cf"    is class=0 & c0_op1=0 & c02_op2=7 & c0_const=1 & zero_03=0 {
-
+    local flags:1 = coproc_get_flags();
+    n_flag = flags[0,1];
+    z_flag = flags[1,1];
+    v_flag = flags[2,1];
+    c_flag = flags[3,1];
 }
 
 
 # Class 0 (3)
 
 :jrgt RelSign8  is class=0 & c0_op1=4 & c0_d=0 & RelSign8 {
-
+    jrgtOp(RelSign8);
 }
 
 :"jrgt.d" RelSign8  is class=0 & c0_op1=4 & c0_d=1 & RelSign8 {
-
+    jrgtDOp(RelSign8);
 }
 
 :jrge RelSign8  is class=0 & c0_op1=5 & c0_d=0 & RelSign8 {
-
+    jrgeOp(RelSign8);
 }
 
 :"jrge.d" RelSign8  is class=0 & c0_op1=5 & c0_d=1 & RelSign8 {
-
+    jrgeDOp(RelSign8);
 }
 
 :jrlt RelSign8  is class=0 & c0_op1=6 & c0_d=0 & RelSign8 {
-
+    jrltOp(RelSign8);
 }
 
 :"jrlt.d" RelSign8  is class=0 & c0_op1=6 & c0_d=1 & RelSign8 {
-
+    jrltDOp(RelSign8);
 }
 
 :jrle RelSign8  is class=0 & c0_op1=7 & c0_d=0 & RelSign8 {
-
+    jrleOp(RelSign8);
 }
 
 :"jrle.d" RelSign8  is class=0 & c0_op1=7 & c0_d=1 & RelSign8 {
-
+    jrleDOp(RelSign8);
 }
 
 :jrugt RelSign8  is class=0 & c0_op1=8 & c0_d=0 & RelSign8 {
-
+    jrugtOp(RelSign8);
 }
 
 :"jrugt.d" RelSign8  is class=0 & c0_op1=8 & c0_d=1 & RelSign8 {
-
+    jrugtDOp(RelSign8);
 }
 
 :jruge RelSign8  is class=0 & c0_op1=9 & c0_d=0 & RelSign8 {
-
+    jrugeOp(RelSign8);
 }
 
 :"jruge.d" RelSign8  is class=0 & c0_op1=9 & c0_d=1 & RelSign8 {
-
+    jrugeDOp(RelSign8);
 }
 
 :jrult RelSign8  is class=0 & c0_op1=10 & c0_d=0 & RelSign8 {
-
+    jrultOp(RelSign8);
 }
 
 :"jrult.d" RelSign8  is class=0 & c0_op1=10 & c0_d=1 & RelSign8 {
-
+    jrultDOp(RelSign8);
 }
 
 :jrule RelSign8  is class=0 & c0_op1=11 & c0_d=0 & RelSign8 {
-
+    jruleOp(RelSign8);
 }
 
 :"jrule.d" RelSign8  is class=0 & c0_op1=11 & c0_d=1 & RelSign8 {
-
+    jruleDOp(RelSign8);
 }
 
 :jreq RelSign8  is class=0 & c0_op1=12 & c0_d=0 & RelSign8 {
-
+    jreqOp(RelSign8);
 }
 
 :"jreq.d" RelSign8  is class=0 & c0_op1=12 & c0_d=1 & RelSign8 {
-
+    jreqDOp(RelSign8);
 }
 
 :jrne RelSign8  is class=0 & c0_op1=13 & c0_d=0 & RelSign8 {
-
+    jrneOp(RelSign8);
 }
 
 :"jrne.d" RelSign8  is class=0 & c0_op1=13 & c0_d=1 & RelSign8 {
-
+    jrneDOp(RelSign8);
 }
 
 :call RelSign8  is class=0 & c0_op1=14 & c0_d=0 & RelSign8 {
-
+    callOp(RelSign8);
 }
 
 :"call.d" RelSign8  is class=0 & c0_op1=14 & c0_d=1 & RelSign8 {
-
+    callDOp(RelSign8);
 }
 
 :jp RelSign8  is class=0 & c0_op1=15 & c0_d=0 & RelSign8 {
-
+    jpOp(RelSign8);
 }
 
 :"jp.d" RelSign8  is class=0 & c0_op1=15 & c0_d=1 & RelSign8 {
-
+    delayslot(2);
+    jpOp(RelSign8);
 }
 
 
 # Class 1
 
 :"ld.b" %rx_lo,[%rx_hi]    is class=1 & c1_op1=0 & op2=0 & rx_hi & rx_lo {
-
+    rx_lo = sext(*:1 rx_hi);
 }
 
 :"ld.b" %rx_lo,[%rx_hi]+    is class=1 & c1_op1=0 & op2=1 & rx_hi & rx_lo {
-
+    rx_lo = sext(*:1 rx_hi);
+    rx_hi = rx_hi + 1;
 }
 
 :add %rx_lo,%rx_hi   is class=1 & c1_op1=0 & op2=2 & rx_hi & rx_lo {
+    addOp(rx_lo, rx_hi);
+}
 
+:add %rx_lo,%rx_hi   is class=1 & c1_op1=0 & op2=2 & rx_hi & rx_lo & ExtContextClear {
+    local tmp:4 = extContext_val;
+    addExtOp(rx_lo, rx_hi, tmp);
+    build ExtContextClear;
 }
 
 :srl %rx_lo,DoubleImm5     is class=1 & c1_op1=0 & op2=3 & DoubleImm5 & rx_lo {
-
+    srlOp(rx_lo, DoubleImm5);
 }
 
 :"ld.ub" %rx_lo,[%rx_hi]    is class=1 & c1_op1=1 & op2=0 & rx_hi & rx_lo {
-
+    rx_lo = zext(*:1 rx_hi);
 }
 
 :"ld.ub" %rx_lo,[%rx_hi]+    is class=1 & c1_op1=1 & op2=1 & rx_hi & rx_lo {
-
+    rx_lo = zext(*:1 rx_hi);
+    rx_hi = rx_hi + 1;
 }
 
 :sub %rx_lo,%rx_hi   is class=1 & c1_op1=1 & op2=2 & rx_hi & rx_lo {
+    subOp(rx_lo, rx_hi);
+}
 
+:sub %rx_lo,%rx_hi   is class=1 & c1_op1=1 & op2=2 & rx_hi & rx_lo & ExtContextClear {
+    subExtOp(rx_lo, rx_hi, extContext_val);
+    build ExtContextClear;
 }
 
 :sll %rx_lo,DoubleImm5     is class=1 & c1_op1=1 & op2=3 & DoubleImm5 & rx_lo {
-
+    slOp(rx_lo, DoubleImm5);
 }
 
 :"ld.h" %rx_lo,[%rx_hi]    is class=1 & c1_op1=2 & op2=0 & rx_hi & rx_lo {
-
+    rx_lo = sext(*:2 rx_hi);
 }
 
 :"ld.h" %rx_lo,[%rx_hi]+    is class=1 & c1_op1=2 & op2=1 & rx_hi & rx_lo {
-
+    rx_lo = sext(*:2 rx_hi);
+    rx_hi = rx_hi + 2;
 }
 
 :cmp %rx_lo,%rx_hi   is class=1 & c1_op1=2 & op2=2 & rx_hi & rx_lo {
+    cmpOp(rx_lo, rx_hi);
+}
 
+:cmp %rx_lo,%rx_hi   is class=1 & c1_op1=2 & op2=2 & rx_hi & rx_lo & ExtContextClear {
+    cmpOp(rx_hi, extContext_val);
+    build ExtContextClear;
 }
 
 :sra %rx_lo,DoubleImm5     is class=1 & c1_op1=2 & op2=3 & DoubleImm5 & rx_lo {
-
+    sraOp(rx_lo, DoubleImm5);
 }
 
 :"ld.uh" %rx_lo,[%rx_hi]    is class=1 & c1_op1=3 & op2=0 & rx_hi & rx_lo {
-
+    rx_lo = zext(*:2 rx_hi);
 }
 
 :"ld.uh" %rx_lo,[%rx_hi]+    is class=1 & c1_op1=3 & op2=1 & rx_hi & rx_lo {
-
+    rx_lo = zext(*:2 rx_hi);
+    rx_hi = rx_hi + 2;
 }
 
 :"ld.w" %rx_lo,%rx_hi   is class=1 & c1_op1=3 & op2=2 & rx_hi & rx_lo {
-
+    rx_lo = rx_hi;
 }
 
 :sla %rx_lo,DoubleImm5     is class=1 & c1_op1=3 & op2=3 & DoubleImm5 & rx_lo {
-
+    slOp(rx_lo, DoubleImm5);
 }
 
 :"ld.w" %rx_lo,[%rx_hi]    is class=1 & c1_op1=4 & op2=0 & rx_hi & rx_lo {
-
+    rx_lo = * rx_hi;
 }
 
 :"ld.w" %rx_lo,[%rx_hi]+    is class=1 & c1_op1=4 & op2=1 & rx_hi & rx_lo {
-
+    rx_lo = * rx_hi;
+    rx_hi = rx_hi + 4;
 }
 
 :and %rx_lo,%rx_hi   is class=1 & c1_op1=4 & op2=2 & rx_hi & rx_lo {
+    andOp(rx_lo, rx_hi);
+}
 
+:and %rx_lo,%rx_hi   is class=1 & c1_op1=4 & op2=2 & rx_hi & rx_lo & ExtContextClear {
+    local tmp:4 = extContext_val;
+    andExtOp(rx_lo, rx_hi, tmp);
+    build ExtContextClear;
 }
 
 :rr %rx_lo,DoubleImm5     is class=1 & c1_op1=4 & op2=3 & DoubleImm5 & rx_lo {
-
+    rrOp(rx_lo, DoubleImm5);
 }
 
 :"ld.b" [%rx_hi],%rx_lo    is class=1 & c1_op1=5 & op2=0 & rx_hi & rx_lo {
-
+    * rx_hi = rx_lo:1;
 }
 
 :"ld.b" [%rx_hi]+,%rx_lo    is class=1 & c1_op1=5 & op2=1 & rx_hi & rx_lo {
-
+    * rx_hi = rx_lo:1;
+    rx_hi = rx_hi + 1;
 }
 
 :or %rx_lo,%rx_hi   is class=1 & c1_op1=5 & op2=2 & rx_hi & rx_lo {
+    orOp(rx_lo, rx_hi);
+}
 
+:or %rx_lo,%rx_hi   is class=1 & c1_op1=5 & op2=2 & rx_hi & rx_lo & ExtContextClear {
+    orExtOp(rx_lo, rx_hi, extContext_val);
+    build ExtContextClear;
 }
 
 :rl %rx_lo,DoubleImm5     is class=1 & c1_op1=5 & op2=3 & DoubleImm5 & rx_lo {
-
+    rlOp(rx_lo, DoubleImm5);
 }
 
 :"ld.h" [%rx_hi],%rx_lo    is class=1 & c1_op1=6 & op2=0 & rx_hi & rx_lo {
-
+    * rx_hi = rx_lo:2;
 }
 
 :"ld.h" [%rx_hi]+,%rx_lo    is class=1 & c1_op1=6 & op2=1 & rx_hi & rx_lo {
-
+    * rx_hi = rx_lo:2;
+    rx_hi = rx_hi + 2;
 }
 
 :xor %rx_lo,%rx_hi   is class=1 & c1_op1=6 & op2=2 & rx_hi & rx_lo {
+    xorOp(rx_lo, rx_hi);
+}
 
+:xor %rx_lo,%rx_hi   is class=1 & c1_op1=6 & op2=2 & rx_hi & rx_lo & ExtContextClear {
+    xorExtOp(rx_lo, rx_hi, extContext_val);
+    build ExtContextClear;
 }
 
 :"ld.w" [%rx_hi],%rx_lo    is class=1 & c1_op1=7 & op2=0 & rx_hi & rx_lo {
-
+    * rx_hi = rx_lo;
 }
 
 :"ld.w" [%rx_hi]+,%rx_lo    is class=1 & c1_op1=7 & op2=1 & rx_hi & rx_lo {
-
+    * rx_hi = rx_lo;
+    rx_hi = rx_hi + 4;
 }
 
 :not %rx_lo,%rx_hi   is class=1 & c1_op1=7 & op2=2 & rx_hi & rx_lo {
-
+    notOp(rx_lo, rx_hi);
 }
 
 
 # Class 2
 
 :"ld.b" %rx_lo,[%"sp"+imm6_hi]  is class=2 & op1=0 & imm6_hi & rx_lo {
-
+    rx_lo = sext(*:1 (sp + imm6_hi));
 }
 
 :"ld.ub" %rx_lo,[%"sp"+imm6_hi]  is class=2 & op1=1 & imm6_hi & rx_lo {
-
+    rx_lo = zext(*:1 (sp + imm6_hi));
 }
 
 :"ld.h" %rx_lo,[%"sp"+imm6_hi]  is class=2 & op1=2 & imm6_hi & rx_lo {
-
+    rx_lo = sext(*:2 (sp + imm6_hi));
 }
 
 :"ld.uh" %rx_lo,[%"sp"+imm6_hi]  is class=2 & op1=3 & imm6_hi & rx_lo {
-
+    rx_lo = zext(*:2 (sp + imm6_hi));
 }
 
 :"ld.w" %rx_lo,[%"sp"+imm6_hi]  is class=2 & op1=4 & imm6_hi & rx_lo {
-
+    rx_lo = * (sp + imm6_hi);
 }
 
 :"ld.b" [%"sp"+imm6_hi],%rx_lo  is class=2 & op1=5 & imm6_hi & rx_lo {
-
+    * (sp + imm6_hi) = rx_lo:1;
 }
 
 :"ld.h" [%"sp"+imm6_hi],%rx_lo  is class=2 & op1=6 & imm6_hi & rx_lo {
-
+    * (sp + imm6_hi) = rx_lo:2;
 }
 
 :"ld.w" [%"sp"+imm6_hi],%rx_lo  is class=2 & op1=7 & imm6_hi & rx_lo {
-
+    * (sp + imm6_hi) = rx_lo;
 }
 
 
 # Class 3
 
 :add %rx_lo,imm6_hi     is class=3 & op1=0 & imm6_hi & rx_lo {
-
+    addOp(rx_lo, imm6_hi:4);
 }
 
 :sub %rx_lo,imm6_hi     is class=3 & op1=1 & imm6_hi & rx_lo {
-
+    subOp(rx_lo, imm6_hi);
 }
 
 :cmp %rx_lo,sign6     is class=3 & op1=2 & sign6 & rx_lo {
-
+    cmpOp(rx_lo, sign6);
 }
 
 :"ld.w" %rx_lo,sign6     is class=3 & op1=3 & sign6 & rx_lo {
-
+    rx_lo = sign6;
 }
 
 :and %rx_lo,sign6     is class=3 & op1=4 & sign6 & rx_lo {
-
+    local tmp:4 = sign6;
+    andOp(rx_lo, tmp);
 }
 
 :or %rx_lo,sign6     is class=3 & op1=5 & sign6 & rx_lo {
-
+    orOp(rx_lo, sign6);
 }
 
 :xor %rx_lo,sign6     is class=3 & op1=6 & sign6 & rx_lo {
-
+    xorOp(rx_lo, sign6);
 }
 
 :not %rx_lo,sign6     is class=3 & op1=7 & sign6 & rx_lo {
-
+    notOp(rx_lo, sign6);
 }
 
 
 # Class 4 (1)
 
 :add %"sp",imm10    is class=4 & op1=0 & imm10 {
-
+    sp = sp + (imm10:4 * 4);
 }
 
 :sub %"sp",imm10    is class=4 & op1=1 & imm10 {
-    
+    sp = sp - (imm10:4 * 4);
 }
 
 
 # Class 4 (2)
 
 :srl %rx_lo,imm4_imm5l  is class=4 & op1=2 & op2=0 & imm4_imm5l & rx_lo {
-
+    srlOp(rx_lo, imm4_imm5l);
 }
 
 :srl %rx_lo,%rx_hi  is class=4 & op1=2 & op2=1 & rx_hi & rx_lo {
-    
+    srlOp(rx_lo, rx_hi);
 }
 
 :sll %rx_lo,imm4_imm5l  is class=4 & op1=3 & op2=0 & imm4_imm5l & rx_lo {
-
+    slOp(rx_lo, imm4_imm5l);
 }
 
 :sll %rx_lo,%rx_hi  is class=4 & op1=3 & op2=1 & rx_hi & rx_lo {
-    
+    slOp(rx_lo, rx_hi);
 }
 
 :sra %rx_lo,imm4_imm5l  is class=4 & op1=4 & op2=0 & imm4_imm5l & rx_lo {
-
+    sraOp(rx_lo, imm4_imm5l);
 }
 
 :sra %rx_lo,%rx_hi  is class=4 & op1=4 & op2=1 & rx_hi & rx_lo {
-    
+    sraOp(rx_lo, rx_hi);
 }
 
 :swap $rx_lo,%rx_hi     is class=4 & op1=4 & op2=2 & rx_hi & rx_lo {
-
+    rx_lo[24,8] = rx_hi[0,8];
+    rx_lo[16,8] = rx_hi[8,8];
+    rx_lo[8,8] = rx_hi[16,8];
+    rx_lo[0,8] = rx_hi[24,8];
 }
 
 :sla %rx_lo,imm4_imm5l  is class=4 & op1=5 & op2=0 & imm4_imm5l & rx_lo {
-
+    slOp(rx_lo, imm4_imm5l);
 }
 
 :sla %rx_lo,%rx_hi  is class=4 & op1=5 & op2=1 & rx_hi & rx_lo {
-    
+    slOp(rx_lo, rx_hi);
 }
 
 :rr %rx_lo,imm4_imm5l  is class=4 & op1=6 & op2=0 & imm4_imm5l & rx_lo {
-
+    rrOp(rx_lo, imm4_imm5l);
 }
 
 :rr %rx_lo,%rx_hi  is class=4 & op1=6 & op2=1 & rx_hi & rx_lo {
-    
+    rrOp(rx_lo, rx_hi);
 }
 
 :swaph %rx_lo,%rx_hi  is class=4 & op1=6 & op2=2 & rx_hi & rx_lo {
-    
+    rx_lo[24,8] = rx_hi[16,8];
+    rx_lo[16,8] = rx_hi[24,8];
+    rx_lo[8,8] = rx_hi[0,8];
+    rx_lo[0,8] = rx_hi[8,8];
 }
 
 :rl %rx_lo,imm4_imm5l  is class=4 & op1=7 & op2=0 & imm4_imm5l & rx_lo {
-
+    rlOp(rx_lo, imm4_imm5l);
 }
 
 :rl %rx_lo,%rx_hi  is class=4 & op1=7 & op2=1 & rx_hi & rx_lo {
-    
+    rlOp(rx_lo, rx_hi);
 }
 
 
 # Class 5 (1)
 
-:"ld.w" %sx,%rx_hi  is class=5 & op1=0 & op2=0 & rx_hi & sx {
-
+:"ld.w" %sd,%rx_hi  is class=5 & op1=0 & op2=0 & rx_hi & sd {
+    sd = rx_hi;
 }
 
 :"ld.b" %rx_lo,%rx_hi   is class=5 & op1=0 & op2=1 & rx_hi & rx_lo {
-
+    rx_lo = sext(rx_hi:1);
 }
 
 :"mlt.h" %rx_lo,%rx_hi  is class=5 & op1=0 & op2=2 & rx_hi & rx_lo {
-
+    alr = sext(rx_lo:2) * sext(rx_hi:2);
 }
 
 :"ld.w" %rx_lo,%ss      is class=5 & op1=1 & op2=0 & ss & rx_lo {
-
+    rx_lo = ss;
 }
 
 :"ld.ub" %rx_lo,%rx_hi      is class=5 & op1=1 & op2=1 & rx_hi & rx_lo {
-
+    rx_lo = zext(rx_hi:1);
 }
 
 :"mltu.h" %rx_lo,%rx_hi  is class=5 & op1=1 & op2=2 & rx_hi & rx_lo {
-
+    alr = zext(rx_lo:2) * zext(rx_hi:2);
 }
 
 :btst [%rx_hi],imm3     is class=5 & op1=2 & op2=0 & rx_hi & zero_33=0 & imm3 {
-
+    btstOp(rx_hi, imm3);
 }
 
 :"ld.h" %rx_lo,%rx_hi   is class=5 & op1=2 & op2=1 & rx_hi & rx_lo {
-
+    rx_lo = sext(rx_hi:2);
 }
 
 :"mlt.w" %rx_lo,%rx_hi  is class=5 & op1=2 & op2=2 & rx_hi & rx_lo {
-
+    local product:8 = sext(rx_lo) * sext(rx_hi);
+    local product_hi = product >> 32;
+    alr = product:4;
+    ahr = product_hi:4;
 }
 
 :bclr [%rx_hi],imm3     is class=5 & op1=3 & op2=0 & rx_hi & zero_33=0 & imm3 {
-
+    bclrOp(rx_hi, imm3);
 }
 
 :"ld.uh" %rx_lo,%rx_hi   is class=5 & op1=3 & op2=1 & rx_hi & rx_lo {
-
+    rx_lo = zext(rx_hi:2);
 }
 
 :"mltu.w" %rx_lo,%rx_hi  is class=5 & op1=3 & op2=2 & rx_hi & rx_lo {
-
+    local product:8 = zext(rx_lo) * zext(rx_hi);
+    local product_hi = product >> 32;
+    alr = product:4;
+    ahr = product_hi:4;
 }
 
 :bset [%rx_hi],imm3     is class=5 & op1=4 & op2=0 & rx_hi & zero_33=0 & imm3 {
-
+    bsetOp(rx_hi, imm3);
 }
 
 :"ld.c" %rx_lo,imm4_imm5l   is class=5 & op1=4 & op2=1 & imm4_imm5l & rx_lo {
-
+    rx_lo = coproc_load(imm4_imm5l:1);
 }
 
 :bnot [%rx_hi],imm3     is class=5 & op1=5 & op2=0 & rx_hi & zero_33=0 & imm3 {
-
+    bnotOp(rx_hi, imm3);
 }
 
 :"ld.c" imm4_imm5l,%rx_lo  is class=5 & op1=5 & op2=1 & imm4_imm5l & rx_lo {
-
+    coproc_store(imm4_imm5l:1, rx_lo);
 }
 
 :adc %rx_lo,%rx_hi  is class=5 & op1=6 & op2=0 & rx_hi & rx_lo {
-
+    adcOp(rx_lo, rx_hi);
 }
 
 :sbc %rx_lo,%rx_hi  is class=5 & op1=7 & op2=0 & rx_hi & rx_lo {
-
+    sbcOp(rx_lo, rx_hi);
 }
 
 
 # Class 5 (2)
 
 :"do.c" imm6_lo     is class=5 & op1=7 & op2=3 & op3=0 & imm6_lo {
-
+    coproc_exec(imm6_lo:1);
 }
 
-:psrset imm5_lo       is class=5 & op1=7 & op2=3 & op3=1 & zero_55=0 & imm5_lo {
-
+:psrset imm5_lo       is class=5 & op1=7 & op2=3 & op3=1 & zero_55=0 & imm5_lo & psr_vreg {
+    psr_vreg = 1;
 }
 
-:psrclr imm5_lo       is class=5 & op1=7 & op2=3 & op3=2 & zero_55=0 & imm5_lo {
-
+:psrclr imm5_lo       is class=5 & op1=7 & op2=3 & op3=2 & zero_55=0 & imm5_lo & psr_vreg {
+    psr_vreg = 0;
 }
 
 
 # Class 6
 
-:ext imm13      is class=6 & imm13 {
-
+# Used for instructions where there is no x variant on the assembler
+:ext imm13      is class=6 & imm13
+    [ extContext_present=1; globalset(inst_next, extContext_present); ] {
+    extContext_val=(extContext_val << 13) | imm13; 
 }
 
 @include "s1c33_ext.sinc"

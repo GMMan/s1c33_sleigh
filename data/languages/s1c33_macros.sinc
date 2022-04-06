@@ -1,0 +1,318 @@
+# S1C33 operation macros
+# Some macros stolen from Arm processor
+
+macro resultFlags(r) {
+    n_flag = r s< 0;
+    z_flag = r == 0;
+}
+
+macro adcFlags(op1, op2) {
+    local cz = zext(c_flag);
+    local result = op1 + op2;
+    v_flag = scarry(op1, op2) ^^ scarry(result, cz);
+    c_flag = carry(op1, op2) || carry(result, cz);
+}
+
+macro addFlags(op1, op2) {
+    v_flag = scarry(op1, op2);
+    c_flag = carry(op1, op2);
+}
+
+macro sbcFlags(op1, op2) {
+    local cz = zext(c_flag);
+    local result = op1 - op2;
+    v_flag = sborrow(op1, op2) || sborrow(result, cz);
+    c_flag = (op1 < op2) || (result < cz);
+}
+
+macro subFlags(op1, op2) {
+    v_flag = sborrow(op1, op2);
+    c_flag = op1 <= op2;
+}
+
+
+macro adcOp(rd, s) {
+    adcFlags(rd, s);
+    rd = rd + s + zext(c_flag);
+    resultFlags(rd);
+}
+
+macro addOp(rd, s) {
+    addFlags(rd, s);
+    rd = rd + s;
+    resultFlags(rd);
+}
+
+macro addExtOp(rd, rs, imm) {
+    addFlags(rs, imm);
+    rd = rs + imm;
+    resultFlags(rd);
+}
+
+macro andOp(rd, op) {
+    rd = rd & op;
+    resultFlags(rd);
+    v_flag = 0;
+}
+
+macro andExtOp(rd, rs, op) {
+    rd = rs & op;
+    resultFlags(rd);
+    v_flag = 0;
+}
+
+macro bclrOp(rd, pos) {
+    local b = *:1 rd;
+    *:1 rd = b & ~(1 << pos);
+}
+
+macro bnotOp(rd, pos) {
+    local b = *:1 rd;
+    *:1 rd = b ^ (1 << pos);
+}
+
+macro bsetOp(rd, pos) {
+    local b = *:1 rd;
+    *:1 rd = b | (1 << pos);
+}
+
+macro btstOp(rd, pos) {
+    local b = *:1 rd;
+    z_flag = (b & (1 << pos)) == 0;
+}
+
+macro stackPush(rs) {
+    sp = sp - 4;
+    *:4 sp = rs;
+}
+
+macro stackPop(rd) {
+    rd = *:4 sp;
+    sp = sp + 4;
+}
+
+macro callOp(addr) {
+    sp = sp - 4;
+    *:4 sp = inst_next;
+    call addr;
+}
+
+macro callDOp(addr) {
+    delayslot(1);
+    sp = sp - 4;
+    *:4 sp = inst_next;
+    call addr;
+}
+
+macro callIndOp(addr) {
+    sp = sp - 4;
+    *:4 sp = inst_next;
+    call [addr];
+}
+
+macro callDIndOp(addr) {
+    delayslot(1);
+    sp = sp - 4;
+    *:4 sp = inst_next;
+    call [addr];
+}
+
+macro cmpOp(op1, op2) {
+    subFlags(op1, op2);
+    local result:4 = op1 - op2;
+    resultFlags(result);
+}
+
+macro jpOp(addr) {
+    goto addr;
+}
+
+macro jpIndOp(addr) {
+    goto [addr];
+}
+
+macro jreqOp(addr) {
+    if (z_flag) goto addr;
+}
+
+macro jreqDOp(addr) {
+    local f = z_flag;
+    delayslot(2);
+    if (f) goto addr;
+}
+
+macro jrgeOp(addr) {
+    if (n_flag == v_flag) goto addr;
+}
+
+macro jrgeDOp(addr) {
+    local f = n_flag == v_flag;
+    delayslot(2);
+    if (f) goto addr;
+}
+
+macro jrgtOp(addr) {
+    if (!z_flag && n_flag == v_flag) goto addr;
+}
+
+macro jrgtDOp(addr) {
+    local f = !z_flag && n_flag == v_flag;
+    delayslot(2);
+    if (f) goto addr;
+}
+
+macro jrleOp(addr) {
+    if (z_flag || n_flag != v_flag) goto addr;
+}
+
+macro jrleDOp(addr) {
+    local f = z_flag || n_flag != v_flag;
+    delayslot(2);
+    if (f) goto addr;
+}
+
+macro jrltOp(addr) {
+    if (n_flag != v_flag) goto addr;
+}
+
+macro jrltDOp(addr) {
+    local f = n_flag != v_flag;
+    delayslot(2);
+    if (f) goto addr;
+}
+
+macro jrneOp(addr) {
+    if (!z_flag) goto addr;
+}
+
+macro jrneDOp(addr) {
+    local f = !z_flag;
+    delayslot(2);
+    if (f) goto addr;
+}
+
+macro jrugeOp(addr) {
+    if (!c_flag) goto addr;
+}
+
+macro jrugeDOp(addr) {
+    local f = !c_flag;
+    delayslot(2);
+    if (f) goto addr;
+}
+
+macro jrugtOp(addr) {
+    if (!z_flag && !c_flag) goto addr;
+}
+
+macro jrugtDOp(addr) {
+    local f = !z_flag && !c_flag;
+    delayslot(2);
+    if (f) goto addr;
+}
+
+macro jruleOp(addr) {
+    if (z_flag || c_flag) goto addr;
+}
+
+macro jruleDOp(addr) {
+    local f = z_flag || c_flag;
+    delayslot(2);
+    if (f) goto addr;
+}
+
+macro jrultOp(addr) {
+    if (c_flag) goto addr;
+}
+
+macro jrultDOp(addr) {
+    local f = c_flag;
+    delayslot(2);
+    if (f) goto addr;
+}
+
+macro notOp(rd, op) {
+    rd = ~op;
+    resultFlags(rd);
+    v_flag = 0;
+}
+
+macro orOp(rd, rs) {
+    rd = rd | rs;
+    resultFlags(rd);
+    v_flag = 0;
+}
+
+macro orExtOp(rd, rs, imm) {
+    rd = rs | imm;
+    resultFlags(rd);
+    v_flag = 0;
+}
+
+macro retOp() {
+    pc = * sp;
+    sp = sp + 4;
+    return [pc];
+}
+
+macro retdOp() {
+    delayslot(1);
+    pc = * sp;
+    sp = sp + 4;
+    return [pc];
+}
+
+macro rlOp(rd, op) {
+    rd = (rd << op) | (rd >> (32 - op));
+    resultFlags(rd);
+}
+
+macro rrOp(rd, op) {
+    rd = (rd >> op) | (rd << (32 - op));
+    resultFlags(rd);
+}
+
+macro sbcOp(rd, s) {
+    sbcFlags(rd, s);
+    rd = rd - s - zext(c_flag);
+    resultFlags(rd);
+}
+
+macro slOp(rd, op) {
+    rd = rd << op;
+    resultFlags(rd);
+}
+
+macro sraOp(rd, op) {
+    rd = rd s>> op;
+    resultFlags(rd);
+}
+
+macro srlOp(rd, op) {
+    rd = rd >> op;
+    resultFlags(rd);
+}
+
+macro subOp(rd, s) {
+    subFlags(rd, s);
+    rd = rd - s;
+    resultFlags(rd);
+}
+
+macro subExtOp(rd, rs, imm) {
+    subFlags(rs, imm);
+    rd = rs - imm;
+    resultFlags(rd);
+}
+
+macro xorOp(rd, rs) {
+    rd = rd ^ rs;
+    resultFlags(rd);
+    v_flag = 0;
+}
+
+macro xorExtOp(rd, rs, imm) {
+    rd = rs ^ imm;
+    resultFlags(rd);
+    v_flag = 0;
+}

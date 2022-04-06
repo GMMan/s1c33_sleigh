@@ -5,22 +5,22 @@
 
 :xadd %rx_lo,ext_imm     is class=6 & imm13; class=3 & op1=0 & imm6_hi & rx_lo
     [ ext_imm=(imm13 << 6) | imm6_hi; ] {
-
+    addOp(rx_lo, ext_imm:4);
 }
 
 :xadd %rx_lo,ext_imm     is dClass0=6 & dClass1=6 & dImm13_hi & dImm13_lo; class=3 & op1=0 & imm6_hi & rx_lo
     [ ext_imm=(dImm13_hi << 19) | (dImm13_lo << 6) | imm6_hi; ] {
-
+    addOp(rx_lo, ext_imm:4);
 }
 
 :xsub %rx_lo,ext_imm     is class=6 & imm13; class=3 & op1=1 & imm6_hi & rx_lo
     [ ext_imm=(imm13 << 6) | imm6_hi; ] {
-
+    subOp(rx_lo, ext_imm);
 }
 
 :xsub %rx_lo,ext_imm     is dClass0=6 & dClass1=6 & dImm13_hi & dImm13_lo; class=3 & op1=1 & imm6_hi & rx_lo
     [ ext_imm=(dImm13_hi << 19) | (dImm13_lo << 6) | imm6_hi; ] {
-
+    subOp(rx_lo, ext_imm);
 }
 
 
@@ -28,12 +28,12 @@
 
 :xcmp %rx_lo,ext_imm     is class=6 & imm13s; class=3 & op1=2 & sign6u & rx_lo
     [ ext_imm=(imm13s << 6) | sign6u; ] {
-
+    cmpOp(rx_lo, ext_imm);
 }
 
 :xcmp %rx_lo,ext_imm     is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=3 & op1=2 & sign6u & rx_lo
     [ ext_imm=(dImm13s_hi << 19) | (dImm13_lo << 6) | sign6u; ] {
-
+    cmpOp(rx_lo, ext_imm);
 }
 
 
@@ -41,42 +41,44 @@
 
 :xand %rx_lo,ext_imm     is class=6 & imm13s; class=3 & op1=4 & sign6u & rx_lo
     [ ext_imm=(imm13s << 6) | sign6u; ] {
-
+    local tmp:4 = ext_imm;
+    andOp(rx_lo, tmp);
 }
 
 :xand %rx_lo,ext_imm     is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=3 & op1=4 & sign6u & rx_lo
     [ ext_imm=(dImm13s_hi << 19) | (dImm13_lo << 6) | sign6u; ] {
-
+    local tmp:4 = ext_imm;
+    andOp(rx_lo, tmp);
 }
 
 :xoor %rx_lo,ext_imm     is class=6 & imm13s; class=3 & op1=5 & sign6u & rx_lo
     [ ext_imm=(imm13s << 6) | sign6u; ] {
-
+    orOp(rx_lo, ext_imm);
 }
 
 :xoor %rx_lo,ext_imm     is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=3 & op1=5 & sign6u & rx_lo
     [ ext_imm=(dImm13s_hi << 19) | (dImm13_lo << 6) | sign6u; ] {
-
+    orOp(rx_lo, ext_imm);
 }
 
 :xxor %rx_lo,ext_imm     is class=6 & imm13s; class=3 & op1=6 & sign6u & rx_lo
     [ ext_imm=(imm13s << 6) | sign6u; ] {
-
+    xorOp(rx_lo, ext_imm);
 }
 
 :xxor %rx_lo,ext_imm     is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=3 & op1=6 & sign6u & rx_lo
     [ ext_imm=(dImm13s_hi << 19) | (dImm13_lo << 6) | sign6u; ] {
-
+    xorOp(rx_lo, ext_imm);
 }
 
 :xnot %rx_lo,ext_imm     is class=6 & imm13s; class=3 & op1=7 & sign6u & rx_lo
     [ ext_imm=(imm13s << 6) | sign6u; ] {
-
+    notOp(rx_lo, ext_imm);
 }
 
 :xnot %rx_lo,ext_imm     is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=3 & op1=7 & sign6u & rx_lo
     [ ext_imm=(dImm13s_hi << 19) | (dImm13_lo << 6) | sign6u; ] {
-
+    notOp(rx_lo, ext_imm);
 }
 
 
@@ -88,82 +90,82 @@
 
 :"xld.b" %rx_lo,[%"sp"+ext_imm]    is class=6 & imm13; class=2 & op1=0 & imm6_hi & rx_lo
     [ ext_imm=(imm13 << 6) | imm6_hi; ] {
-    
+    rx_lo = sext(*:1 (sp + ext_imm));
 }
 
 :"xld.b" %rx_lo,[%"sp"+ext_imm]    is dClass0=6 & dClass1=6 & dImm13_hi & dImm13_lo; class=2 & op1=0 & imm6_hi & rx_lo
     [ ext_imm=(dImm13_hi << 19) | (dImm13_lo << 6) | imm6_hi; ] {
-    
+    rx_lo = sext(*:1 (sp + ext_imm));
 }
 
 :"xld.ub" %rx_lo,[%"sp"+ext_imm]    is class=6 & imm13; class=2 & op1=1 & imm6_hi & rx_lo
     [ ext_imm=(imm13 << 6) | imm6_hi; ] {
-    
+    rx_lo = zext(*:1 (sp + ext_imm));
 }
 
 :"xld.ub" %rx_lo,[%"sp"+ext_imm]    is dClass0=6 & dClass1=6 & dImm13_hi & dImm13_lo; class=2 & op1=1 & imm6_hi & rx_lo
     [ ext_imm=(dImm13_hi << 19) | (dImm13_lo << 6) | imm6_hi; ] {
-    
+    rx_lo = zext(*:1 (sp + ext_imm));
 }
 
 :"xld.h" %rx_lo,[%"sp"+ext_imm]    is class=6 & imm13; class=2 & op1=2 & imm6_hi & rx_lo
     [ ext_imm=(imm13 << 6) | imm6_hi; ] {
-    
+    rx_lo = sext(*:2 (sp + ext_imm));
 }
 
 :"xld.h" %rx_lo,[%"sp"+ext_imm]    is dClass0=6 & dClass1=6 & dImm13_hi & dImm13_lo; class=2 & op1=2 & imm6_hi & rx_lo
     [ ext_imm=(dImm13_hi << 19) | (dImm13_lo << 6) | imm6_hi; ] {
-    
+    rx_lo = sext(*:2 (sp + ext_imm));
 }
 
 :"xld.uh" %rx_lo,[%"sp"+ext_imm]    is class=6 & imm13; class=2 & op1=3 & imm6_hi & rx_lo
     [ ext_imm=(imm13 << 6) | imm6_hi; ] {
-    
+    rx_lo = zext(*:2 (sp + ext_imm));
 }
 
 :"xld.uh" %rx_lo,[%"sp"+ext_imm]    is dClass0=6 & dClass1=6 & dImm13_hi & dImm13_lo; class=2 & op1=3 & imm6_hi & rx_lo
     [ ext_imm=(dImm13_hi << 19) | (dImm13_lo << 6) | imm6_hi; ] {
-    
+    rx_lo = zext(*:2 (sp + ext_imm));
 }
 
 :"xld.w" %rx_lo,[%"sp"+ext_imm]    is class=6 & imm13; class=2 & op1=4 & imm6_hi & rx_lo
     [ ext_imm=(imm13 << 6) | imm6_hi; ] {
-    
+    rx_lo = * (sp + ext_imm);
 }
 
 :"xld.w" %rx_lo,[%"sp"+ext_imm]    is dClass0=6 & dClass1=6 & dImm13_hi & dImm13_lo; class=2 & op1=4 & imm6_hi & rx_lo
     [ ext_imm=(dImm13_hi << 19) | (dImm13_lo << 6) | imm6_hi; ] {
-    
+    rx_lo = * (sp + ext_imm);
 }
 
 :"xld.b" [%"sp"+ext_imm],%rx_lo    is class=6 & imm13; class=2 & op1=5 & imm6_hi & rx_lo
     [ ext_imm=(imm13 << 6) | imm6_hi; ] {
-    
+    *:1 (sp + ext_imm) = rx_lo;
 }
 
 :"xld.b" [%"sp"+ext_imm],%rx_lo    is dClass0=6 & dClass1=6 & dImm13_hi & dImm13_lo; class=2 & op1=5 & imm6_hi & rx_lo
     [ ext_imm=(dImm13_hi << 19) | (dImm13_lo << 6) | imm6_hi; ] {
-    
+    *:1 (sp + ext_imm) = rx_lo;
 }
 
 :"xld.h" [%"sp"+ext_imm],%rx_lo    is class=6 & imm13; class=2 & op1=6 & imm6_hi & rx_lo
     [ ext_imm=(imm13 << 6) | imm6_hi; ] {
-    
+    *:2 (sp + ext_imm) = rx_lo;
 }
 
 :"xld.h" [%"sp"+ext_imm],%rx_lo    is dClass0=6 & dClass1=6 & dImm13_hi & dImm13_lo; class=2 & op1=6 & imm6_hi & rx_lo
     [ ext_imm=(dImm13_hi << 19) | (dImm13_lo << 6) | imm6_hi; ] {
-    
+    *:2 (sp + ext_imm) = rx_lo;
 }
 
 :"xld.w" [%"sp"+ext_imm],%rx_lo    is class=6 & imm13; class=2 & op1=7 & imm6_hi & rx_lo
     [ ext_imm=(imm13 << 6) | imm6_hi; ] {
-    
+    * (sp + ext_imm) = rx_lo;
 }
 
 :"xld.w" [%"sp"+ext_imm],%rx_lo    is dClass0=6 & dClass1=6 & dImm13_hi & dImm13_lo; class=2 & op1=7 & imm6_hi & rx_lo
     [ ext_imm=(dImm13_hi << 19) | (dImm13_lo << 6) | imm6_hi; ] {
-    
+    * (sp + ext_imm) = rx_lo;
 }
 
 
@@ -171,75 +173,75 @@
 # Form (3) only
 
 :"xld.b" %rx_lo,[%rx_hi+imm13]    is class=6 & imm13; class=1 & c1_op1=0 & op2=0 & rx_hi & rx_lo {
-    
+    rx_lo = sext(*:1 (rx_hi + imm13));
 }
 
 :"xld.b" %rx_lo,[%rx_hi+ext_imm]    is dClass0=6 & dClass1=6 & dImm13_hi & dImm13_lo; class=1 & c1_op1=0 & op2=0 & rx_hi & rx_lo
     [ ext_imm=(dImm13_hi << 13) | dImm13_lo; ] {
-    
+    rx_lo = sext(*:1 (rx_hi + ext_imm));
 }
 
 :"xld.ub" %rx_lo,[%rx_hi+imm13]    is class=6 & imm13; class=1 & c1_op1=1 & op2=0 & rx_hi & rx_lo {
-    
+    rx_lo = zext(*:1 (rx_hi + imm13));
 }
 
 :"xld.ub" %rx_lo,[%rx_hi+ext_imm]    is dClass0=6 & dClass1=6 & dImm13_hi & dImm13_lo; class=1 & c1_op1=1 & op2=0 & rx_hi & rx_lo
     [ ext_imm=(dImm13_hi << 13) | dImm13_lo; ] {
-    
+    rx_lo = zext(*:1 (rx_hi + ext_imm));
 }
 
 :"xld.h" %rx_lo,[%rx_hi+imm13]    is class=6 & imm13; class=1 & c1_op1=2 & op2=0 & rx_hi & rx_lo {
-    
+    rx_lo = sext(*:2 (rx_hi + imm13));
 }
 
 :"xld.h" %rx_lo,[%rx_hi+ext_imm]    is dClass0=6 & dClass1=6 & dImm13_hi & dImm13_lo; class=1 & c1_op1=2 & op2=0 & rx_hi & rx_lo
     [ ext_imm=(dImm13_hi << 13) | dImm13_lo; ] {
-    
+    rx_lo = sext(*:2 (rx_hi + ext_imm));
 }
 
 :"xld.uh" %rx_lo,[%rx_hi+imm13]    is class=6 & imm13; class=1 & c1_op1=3 & op2=0 & rx_hi & rx_lo {
-    
+    rx_lo = zext(*:2 (rx_hi + imm13));
 }
 
 :"xld.uh" %rx_lo,[%rx_hi+ext_imm]    is dClass0=6 & dClass1=6 & dImm13_hi & dImm13_lo; class=1 & c1_op1=3 & op2=0 & rx_hi & rx_lo
     [ ext_imm=(dImm13_hi << 13) | dImm13_lo; ] {
-    
+    rx_lo = zext(*:2 (rx_hi + ext_imm));
 }
 
 :"xld.w" %rx_lo,[%rx_hi+imm13]    is class=6 & imm13; class=1 & c1_op1=4 & op2=0 & rx_hi & rx_lo {
-    
+    rx_lo = * (rx_hi + imm13);
 }
 
 :"xld.w" %rx_lo,[%rx_hi+ext_imm]    is dClass0=6 & dClass1=6 & dImm13_hi & dImm13_lo; class=1 & c1_op1=4 & op2=0 & rx_hi & rx_lo
     [ ext_imm=(dImm13_hi << 13) | dImm13_lo; ] {
-    
+    rx_lo = * (rx_hi + ext_imm);
 }
 
 :"xld.b" [%rx_hi+imm13],%rx_lo    is class=6 & imm13; class=1 & c1_op1=5 & op2=0 & rx_hi & rx_lo {
-    
+    * (rx_hi + imm13) = rx_lo:1;
 }
 
 :"xld.b" [%rx_hi+ext_imm],%rx_lo    is dClass0=6 & dClass1=6 & dImm13_hi & dImm13_lo; class=1 & c1_op1=5 & op2=0 & rx_hi & rx_lo
     [ ext_imm=(dImm13_hi << 13) | dImm13_lo; ] {
-    
+    * (rx_hi + ext_imm) = rx_lo:1;
 }
 
 :"xld.h" [%rx_hi+imm13],%rx_lo    is class=6 & imm13; class=1 & c1_op1=6 & op2=0 & rx_hi & rx_lo {
-    
+    * (rx_hi + imm13) = rx_lo:2;
 }
 
 :"xld.h" [%rx_hi+ext_imm],%rx_lo    is dClass0=6 & dClass1=6 & dImm13_hi & dImm13_lo; class=1 & c1_op1=6 & op2=0 & rx_hi & rx_lo
     [ ext_imm=(dImm13_hi << 13) | dImm13_lo; ] {
-    
+    * (rx_hi + ext_imm) = rx_lo:2;
 }
 
 :"xld.w" [%rx_hi+imm13],%rx_lo    is class=6 & imm13; class=1 & c1_op1=7 & op2=0 & rx_hi & rx_lo {
-    
+    * (rx_hi + imm13) = rx_lo;
 }
 
 :"xld.w" [%rx_hi+ext_imm],%rx_lo    is dClass0=6 & dClass1=6 & dImm13_hi & dImm13_lo; class=1 & c1_op1=7 & op2=0 & rx_hi & rx_lo
     [ ext_imm=(dImm13_hi << 13) | dImm13_lo; ] {
-    
+    * (rx_hi + ext_imm) = rx_lo;
 }
 
 
@@ -248,12 +250,12 @@
 
 :"xld.w" %rx_lo,ext_imm     is class=6 & imm13s; class=3 & op1=3 & sign6u & rx_lo
     [ ext_imm=(imm13s << 6) | sign6u; ] {
-    
+    rx_lo = ext_imm;
 }
 
 :"xld.w" %rx_lo,ext_imm     is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=3 & op1=3 & sign6u & rx_lo
     [ ext_imm=(dImm13s_hi << 19) | (dImm13_lo << 6) | sign6u; ] {
-
+    rx_lo = ext_imm;
 }
 
 
@@ -261,257 +263,478 @@
 # Form (2) only
 
 :xbtst [%rx_hi+imm13],imm3    is class=6 & imm13; class=5 & op1=2 & op2=0 & rx_hi & zero_33=0 & imm3 {
-    
+    btstOp(rx_hi + imm13, imm3);
 }
 
 :xbtst [%rx_hi+ext_imm],imm3    is dClass0=6 & dClass1=6 & dImm13_hi & dImm13_lo; class=5 & op1=2 & op2=0 & rx_hi & zero_33=0 & imm3
     [ ext_imm=(dImm13_hi << 13) | dImm13_lo; ] {
-    
+    btstOp(rx_hi + ext_imm, imm3);
 }
 
 :xbclr [%rx_hi+imm13],imm3    is class=6 & imm13; class=5 & op1=3 & op2=0 & rx_hi & zero_33=0 & imm3 {
-    
+    bclrOp(rx_hi + imm13, imm3);
 }
 
 :xbclr [%rx_hi+ext_imm],imm3    is dClass0=6 & dClass1=6 & dImm13_hi & dImm13_lo; class=5 & op1=3 & op2=0 & rx_hi & zero_33=0 & imm3
     [ ext_imm=(dImm13_hi << 13) | dImm13_lo; ] {
-    
+    bclrOp(rx_hi + ext_imm, imm3);
 }
 
 :xbset [%rx_hi+imm13],imm3    is class=6 & imm13; class=5 & op1=4 & op2=0 & rx_hi & zero_33=0 & imm3 {
-    
+    bsetOp(rx_hi + imm13, imm3);
 }
 
 :xbset [%rx_hi+ext_imm],imm3    is dClass0=6 & dClass1=6 & dImm13_hi & dImm13_lo; class=5 & op1=4 & op2=0 & rx_hi & zero_33=0 & imm3
     [ ext_imm=(dImm13_hi << 13) | dImm13_lo; ] {
-    
+    bsetOp(rx_hi + ext_imm, imm3);
 }
 
 :xbnot [%rx_hi+imm13],imm3    is class=6 & imm13; class=5 & op1=5 & op2=0 & rx_hi & zero_33=0 & imm3 {
-    
+    bnotOp(rx_hi + imm13, imm3);
 }
 
 :xbnot [%rx_hi+ext_imm],imm3    is dClass0=6 & dClass1=6 & dImm13_hi & dImm13_lo; class=5 & op1=5 & op2=0 & rx_hi & zero_33=0 & imm3
     [ ext_imm=(dImm13_hi << 13) | dImm13_lo; ] {
-    
+    bnotOp(rx_hi + ext_imm, imm3);
 }
 
 
 # 8.7.9 Branch Instructions
 # Forms (2) and (4) only
+# Using inst_next - 2 to locate offset properly (pc is at actual branch
+# instruction, not the ext instructions that instr_start would point to)
+# Converting to ram address space; there's probably a better way to do this
 
-:sjrgt relAddr    is class=6 & imm13s; class=0 & c0_op1=4 & c0_d=0 & sign8u
+sjrgtRelAddr: relAddr    is class=6 & imm13s; class=0 & c0_op1=4 & c0_d=0 & sign8u
     [ relAddr=inst_next - 2 + ((imm13s << 9) | (sign8u * 2)); ] {
+    export *:4 relAddr;
 }
 
-:xjrgt relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=4 & c0_d=0 & sign8u
+:sjrgt sjrgtRelAddr    is sjrgtRelAddr {
+    jrgtOp(sjrgtRelAddr);
+}
+
+xjrgtRelAddr: relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=4 & c0_d=0 & sign8u
     [ relAddr=inst_next - 2 + (((dImm13s_hi & 0x1ff8) << 19) | (dImm13_lo << 9) | (sign8u * 2)); ] {
-    
+    export *:4 relAddr;
 }
 
-:"sjrgt.d" relAddr    is class=6 & imm13s; class=0 & c0_op1=4 & c0_d=1 & sign8u
+:xjrgt xjrgtRelAddr    is xjrgtRelAddr {
+    jrgtOp(xjrgtRelAddr);
+}
+
+sjrgtdRelAddr: relAddr    is class=6 & imm13s; class=0 & c0_op1=4 & c0_d=1 & sign8u
     [ relAddr=inst_next - 2 + ((imm13s << 9) | (sign8u * 2)); ] {
+    export *:4 relAddr;
 }
 
-:"xjrgt.d" relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=4 & c0_d=1 & sign8u
+:"sjrgt.d" sjrgtdRelAddr    is sjrgtdRelAddr {
+    jrgtDOp(sjrgtdRelAddr);
+}
+
+xjrgtdRelAddr: relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=4 & c0_d=1 & sign8u
     [ relAddr=inst_next - 2 + (((dImm13s_hi & 0x1ff8) << 19) | (dImm13_lo << 9) | (sign8u * 2)); ] {
-    
+    export *:4 relAddr;
 }
 
-:sjrge relAddr    is class=6 & imm13s; class=0 & c0_op1=5 & c0_d=0 & sign8u
+:"xjrgt.d" xjrgtdRelAddr    is xjrgtdRelAddr {
+    jrgtDOp(xjrgtdRelAddr);
+}
+
+sjrgeRelAddr: relAddr    is class=6 & imm13s; class=0 & c0_op1=5 & c0_d=0 & sign8u
     [ relAddr=inst_next - 2 + ((imm13s << 9) | (sign8u * 2)); ] {
+    export *:4 relAddr;
 }
 
-:xjrge relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=5 & c0_d=0 & sign8u
+:sjrge sjrgeRelAddr    is sjrgeRelAddr {
+    jrgeOp(sjrgeRelAddr);
+}
+
+xjrgeRelAddr: relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=5 & c0_d=0 & sign8u
     [ relAddr=inst_next - 2 + (((dImm13s_hi & 0x1ff8) << 19) | (dImm13_lo << 9) | (sign8u * 2)); ] {
-    
+    export *:4 relAddr;
 }
 
-:"sjrge.d" relAddr    is class=6 & imm13s; class=0 & c0_op1=5 & c0_d=1 & sign8u
+:xjrge xjrgeRelAddr    is xjrgeRelAddr {
+    jrgeOp(xjrgeRelAddr);
+}
+
+sjrgedRelAddr: relAddr    is class=6 & imm13s; class=0 & c0_op1=5 & c0_d=1 & sign8u
     [ relAddr=inst_next - 2 + ((imm13s << 9) | (sign8u * 2)); ] {
+    export *:4 relAddr;
 }
 
-:"xjrge.d" relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=5 & c0_d=1 & sign8u
+:"sjrge.d" sjrgedRelAddr    is sjrgedRelAddr {
+    jrgeDOp(sjrgedRelAddr);
+}
+
+xjrgedRelAddr: relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=5 & c0_d=1 & sign8u
     [ relAddr=inst_next - 2 + (((dImm13s_hi & 0x1ff8) << 19) | (dImm13_lo << 9) | (sign8u * 2)); ] {
-    
+    export *:4 relAddr;
 }
 
-:sjrlt relAddr    is class=6 & imm13s; class=0 & c0_op1=6 & c0_d=0 & sign8u
+:"xjrge.d" xjrgedRelAddr    is xjrgedRelAddr {
+    jrgeDOp(xjrgedRelAddr);
+}
+
+sjrltRelAddr: relAddr    is class=6 & imm13s; class=0 & c0_op1=6 & c0_d=0 & sign8u
     [ relAddr=inst_next - 2 + ((imm13s << 9) | (sign8u * 2)); ] {
+    export *:4 relAddr;
 }
 
-:xjrlt relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=6 & c0_d=0 & sign8u
+:sjrlt sjrltRelAddr    is sjrltRelAddr {
+    jrltOp(sjrltRelAddr);
+}
+
+xjrltRelAddr: relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=6 & c0_d=0 & sign8u
     [ relAddr=inst_next - 2 + (((dImm13s_hi & 0x1ff8) << 19) | (dImm13_lo << 9) | (sign8u * 2)); ] {
-    
+    export *:4 relAddr;
 }
 
-:"sjrlt.d" relAddr    is class=6 & imm13s; class=0 & c0_op1=6 & c0_d=1 & sign8u
+:xjrlt xjrltRelAddr    is xjrltRelAddr {
+    jrltOp(xjrltRelAddr);
+}
+
+sjrltdRelAddr: relAddr    is class=6 & imm13s; class=0 & c0_op1=6 & c0_d=1 & sign8u
     [ relAddr=inst_next - 2 + ((imm13s << 9) | (sign8u * 2)); ] {
+    export *:4 relAddr;
 }
 
-:"xjrlt.d" relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=6 & c0_d=1 & sign8u
+:"sjrlt.d" sjrltdRelAddr    is sjrltdRelAddr {
+    jrltDOp(sjrltdRelAddr);
+}
+
+xjrltdRelAddr: relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=6 & c0_d=1 & sign8u
     [ relAddr=inst_next - 2 + (((dImm13s_hi & 0x1ff8) << 19) | (dImm13_lo << 9) | (sign8u * 2)); ] {
-    
+    export *:4 relAddr;
 }
 
-:sjrle relAddr    is class=6 & imm13s; class=0 & c0_op1=7 & c0_d=0 & sign8u
+:"xjrlt.d" xjrltdRelAddr    is xjrltdRelAddr {
+    jrltDOp(xjrltdRelAddr);
+}
+
+sjrleRelAddr: relAddr    is class=6 & imm13s; class=0 & c0_op1=7 & c0_d=0 & sign8u
     [ relAddr=inst_next - 2 + ((imm13s << 9) | (sign8u * 2)); ] {
+    export *:4 relAddr;
 }
 
-:xjrle relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=7 & c0_d=0 & sign8u
+:sjrle sjrleRelAddr    is sjrleRelAddr {
+    jrleOp(sjrleRelAddr);
+}
+
+xjrleRelAddr: relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=7 & c0_d=0 & sign8u
     [ relAddr=inst_next - 2 + (((dImm13s_hi & 0x1ff8) << 19) | (dImm13_lo << 9) | (sign8u * 2)); ] {
-    
+    export *:4 relAddr;
 }
 
-:"sjrle.d" relAddr    is class=6 & imm13s; class=0 & c0_op1=7 & c0_d=1 & sign8u
+:xjrle xjrleRelAddr    is xjrleRelAddr {
+    jrleOp(xjrleRelAddr);
+}
+
+sjrledRelAddr: relAddr    is class=6 & imm13s; class=0 & c0_op1=7 & c0_d=1 & sign8u
     [ relAddr=inst_next - 2 + ((imm13s << 9) | (sign8u * 2)); ] {
+    export *:4 relAddr;
 }
 
-:"xjrle.d" relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=7 & c0_d=1 & sign8u
+:"sjrle.d" sjrledRelAddr    is sjrledRelAddr {
+    jrleDOp(sjrledRelAddr);
+}
+
+xjrledRelAddr: relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=7 & c0_d=1 & sign8u
     [ relAddr=inst_next - 2 + (((dImm13s_hi & 0x1ff8) << 19) | (dImm13_lo << 9) | (sign8u * 2)); ] {
-    
+    export *:4 relAddr;
 }
 
-:sjrugt relAddr    is class=6 & imm13s; class=0 & c0_op1=8 & c0_d=0 & sign8u
+:"xjrle.d" xjrledRelAddr    is xjrledRelAddr {
+    jrleDOp(xjrledRelAddr);
+}
+
+sjrugtRelAddr: relAddr    is class=6 & imm13s; class=0 & c0_op1=8 & c0_d=0 & sign8u
     [ relAddr=inst_next - 2 + ((imm13s << 9) | (sign8u * 2)); ] {
+    export *:4 relAddr;
 }
 
-:xjrugt relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=8 & c0_d=0 & sign8u
+:sjrugt sjrugtRelAddr    is sjrugtRelAddr {
+    jrugtOp(sjrugtRelAddr);
+}
+
+xjrugtRelAddr: relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=8 & c0_d=0 & sign8u
     [ relAddr=inst_next - 2 + (((dImm13s_hi & 0x1ff8) << 19) | (dImm13_lo << 9) | (sign8u * 2)); ] {
-    
+    export *:4 relAddr;
 }
 
-:"sjrugt.d" relAddr    is class=6 & imm13s; class=0 & c0_op1=8 & c0_d=1 & sign8u
+:xjrugt xjrugtRelAddr    is xjrugtRelAddr {
+    jrugtOp(xjrugtRelAddr);
+}
+
+sjrugtdRelAddr: relAddr    is class=6 & imm13s; class=0 & c0_op1=8 & c0_d=1 & sign8u
     [ relAddr=inst_next - 2 + ((imm13s << 9) | (sign8u * 2)); ] {
+    export *:4 relAddr;
 }
 
-:"xjrugt.d" relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=8 & c0_d=1 & sign8u
+:"sjrugt.d" sjrugtdRelAddr    is sjrugtdRelAddr {
+    jrugtDOp(sjrugtdRelAddr);
+}
+
+xjrugtdRelAddr: relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=8 & c0_d=1 & sign8u
     [ relAddr=inst_next - 2 + (((dImm13s_hi & 0x1ff8) << 19) | (dImm13_lo << 9) | (sign8u * 2)); ] {
-    
+    export *:4 relAddr;
 }
 
-:sjruge relAddr    is class=6 & imm13s; class=0 & c0_op1=9 & c0_d=0 & sign8u
+:"xjrugt.d" xjrugtdRelAddr    is xjrugtdRelAddr {
+    jrugtDOp(xjrugtdRelAddr);
+}
+
+sjrugeRelAddr: relAddr    is class=6 & imm13s; class=0 & c0_op1=9 & c0_d=0 & sign8u
     [ relAddr=inst_next - 2 + ((imm13s << 9) | (sign8u * 2)); ] {
+    export *:4 relAddr;
 }
 
-:xjruge relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=9 & c0_d=0 & sign8u
+:sjruge sjrugeRelAddr    is sjrugeRelAddr {
+    jrugeOp(sjrugeRelAddr);
+}
+
+xjrugeRelAddr: relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=9 & c0_d=0 & sign8u
     [ relAddr=inst_next - 2 + (((dImm13s_hi & 0x1ff8) << 19) | (dImm13_lo << 9) | (sign8u * 2)); ] {
-    
+    export *:4 relAddr;
 }
 
-:"sjruge.d" relAddr    is class=6 & imm13s; class=0 & c0_op1=9 & c0_d=1 & sign8u
+:xjruge xjrugeRelAddr    is xjrugeRelAddr {
+    jrugeOp(xjrugeRelAddr);
+}
+
+sjrugedRelAddr: relAddr    is class=6 & imm13s; class=0 & c0_op1=9 & c0_d=1 & sign8u
     [ relAddr=inst_next - 2 + ((imm13s << 9) | (sign8u * 2)); ] {
+    export *:4 relAddr;
 }
 
-:"xjruge.d" relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=9 & c0_d=1 & sign8u
+:"sjruge.d" sjrugedRelAddr    is sjrugedRelAddr {
+    jrugeDOp(sjrugedRelAddr);
+}
+
+xjrugedRelAddr: relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=9 & c0_d=1 & sign8u
     [ relAddr=inst_next - 2 + (((dImm13s_hi & 0x1ff8) << 19) | (dImm13_lo << 9) | (sign8u * 2)); ] {
-    
+    export *:4 relAddr;
 }
 
-:sjrult relAddr    is class=6 & imm13s; class=0 & c0_op1=10 & c0_d=0 & sign8u
+:"xjruge.d" xjrugedRelAddr    is xjrugedRelAddr {
+    jrugeDOp(xjrugedRelAddr);
+}
+
+sjrultRelAddr: relAddr    is class=6 & imm13s; class=0 & c0_op1=10 & c0_d=0 & sign8u
     [ relAddr=inst_next - 2 + ((imm13s << 9) | (sign8u * 2)); ] {
+    export *:4 relAddr;
 }
 
-:xjrult relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=10 & c0_d=0 & sign8u
+:sjrult sjrultRelAddr    is sjrultRelAddr {
+    jrultOp(sjrultRelAddr);
+}
+
+xjrultRelAddr: relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=10 & c0_d=0 & sign8u
     [ relAddr=inst_next - 2 + (((dImm13s_hi & 0x1ff8) << 19) | (dImm13_lo << 9) | (sign8u * 2)); ] {
-    
+    export *:4 relAddr;
 }
 
-:"sjrult.d" relAddr    is class=6 & imm13s; class=0 & c0_op1=10 & c0_d=1 & sign8u
+:xjrult xjrultRelAddr    is xjrultRelAddr {
+    jrultOp(xjrultRelAddr);
+}
+
+sjrultdRelAddr: relAddr    is class=6 & imm13s; class=0 & c0_op1=10 & c0_d=1 & sign8u
     [ relAddr=inst_next - 2 + ((imm13s << 9) | (sign8u * 2)); ] {
+    export *:4 relAddr;
 }
 
-:"xjrult.d" relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=10 & c0_d=1 & sign8u
+:"sjrult.d" sjrultdRelAddr    is sjrultdRelAddr {
+    jrultDOp(sjrultdRelAddr);
+}
+
+xjrultdRelAddr: relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=10 & c0_d=1 & sign8u
     [ relAddr=inst_next - 2 + (((dImm13s_hi & 0x1ff8) << 19) | (dImm13_lo << 9) | (sign8u * 2)); ] {
-    
+    export *:4 relAddr;
 }
 
-:sjrule relAddr    is class=6 & imm13s; class=0 & c0_op1=11 & c0_d=0 & sign8u
+:"xjrult.d" xjrultdRelAddr    is xjrultdRelAddr {
+    jrultDOp(xjrultdRelAddr);
+}
+
+sjruleRelAddr: relAddr    is class=6 & imm13s; class=0 & c0_op1=11 & c0_d=0 & sign8u
     [ relAddr=inst_next - 2 + ((imm13s << 9) | (sign8u * 2)); ] {
+    export *:4 relAddr;
 }
 
-:xjrule relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=11 & c0_d=0 & sign8u
+:sjrule sjruleRelAddr    is sjruleRelAddr {
+    jruleOp(sjruleRelAddr);
+}
+
+xjruleRelAddr: relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=11 & c0_d=0 & sign8u
     [ relAddr=inst_next - 2 + (((dImm13s_hi & 0x1ff8) << 19) | (dImm13_lo << 9) | (sign8u * 2)); ] {
-    
+    export *:4 relAddr;
 }
 
-:"sjrule.d" relAddr    is class=6 & imm13s; class=0 & c0_op1=11 & c0_d=1 & sign8u
+:xjrule xjruleRelAddr    is xjruleRelAddr {
+    jruleOp(xjruleRelAddr);
+}
+
+sjruledRelAddr: relAddr    is class=6 & imm13s; class=0 & c0_op1=11 & c0_d=1 & sign8u
     [ relAddr=inst_next - 2 + ((imm13s << 9) | (sign8u * 2)); ] {
+    export *:4 relAddr;
 }
 
-:"xjrule.d" relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=11 & c0_d=1 & sign8u
+:"sjrule.d" sjruledRelAddr    is sjruledRelAddr {
+    jruleDOp(sjruledRelAddr);
+}
+
+xjruledRelAddr: relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=11 & c0_d=1 & sign8u
     [ relAddr=inst_next - 2 + (((dImm13s_hi & 0x1ff8) << 19) | (dImm13_lo << 9) | (sign8u * 2)); ] {
-    
+    export *:4 relAddr;
 }
 
-:sjreq relAddr    is class=6 & imm13s; class=0 & c0_op1=12 & c0_d=0 & sign8u
+:"xjrule.d" xjruledRelAddr    is xjruledRelAddr {
+    jruleDOp(xjruledRelAddr);
+}
+
+sjreqRelAddr: relAddr    is class=6 & imm13s; class=0 & c0_op1=12 & c0_d=0 & sign8u
     [ relAddr=inst_next - 2 + ((imm13s << 9) | (sign8u * 2)); ] {
+    export *:4 relAddr;
 }
 
-:xjreq relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=12 & c0_d=0 & sign8u
+:sjreq sjreqRelAddr    is sjreqRelAddr {
+    jreqOp(sjreqRelAddr);
+}
+
+xjreqRelAddr: relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=12 & c0_d=0 & sign8u
     [ relAddr=inst_next - 2 + (((dImm13s_hi & 0x1ff8) << 19) | (dImm13_lo << 9) | (sign8u * 2)); ] {
-    
+    export *:4 relAddr;
 }
 
-:"sjreq.d" relAddr    is class=6 & imm13s; class=0 & c0_op1=12 & c0_d=1 & sign8u
+:xjreq xjreqRelAddr    is xjreqRelAddr {
+    jreqOp(xjreqRelAddr);
+}
+
+sjreqdRelAddr: relAddr    is class=6 & imm13s; class=0 & c0_op1=12 & c0_d=1 & sign8u
     [ relAddr=inst_next - 2 + ((imm13s << 9) | (sign8u * 2)); ] {
+    export *:4 relAddr;
 }
 
-:"xjreq.d" relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=12 & c0_d=1 & sign8u
+:"sjreq.d" sjreqdRelAddr    is sjreqdRelAddr {
+    jreqDOp(sjreqdRelAddr);
+}
+
+xjreqdRelAddr: relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=12 & c0_d=1 & sign8u
     [ relAddr=inst_next - 2 + (((dImm13s_hi & 0x1ff8) << 19) | (dImm13_lo << 9) | (sign8u * 2)); ] {
-    
+    export *:4 relAddr;
 }
 
-:sjrne relAddr    is class=6 & imm13s; class=0 & c0_op1=13 & c0_d=0 & sign8u
+:"xjreq.d" xjreqdRelAddr    is xjreqdRelAddr {
+    jreqDOp(xjreqdRelAddr);
+}
+
+sjrneRelAddr: relAddr    is class=6 & imm13s; class=0 & c0_op1=13 & c0_d=0 & sign8u
     [ relAddr=inst_next - 2 + ((imm13s << 9) | (sign8u * 2)); ] {
+    export *:4 relAddr;
 }
 
-:xjrne relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=13 & c0_d=0 & sign8u
+:sjrne sjrneRelAddr    is sjrneRelAddr {
+    jrneOp(sjrneRelAddr);
+}
+
+xjrneRelAddr: relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=13 & c0_d=0 & sign8u
     [ relAddr=inst_next - 2 + (((dImm13s_hi & 0x1ff8) << 19) | (dImm13_lo << 9) | (sign8u * 2)); ] {
-    
+    export *:4 relAddr;
 }
 
-:"sjrne.d" relAddr    is class=6 & imm13s; class=0 & c0_op1=13 & c0_d=1 & sign8u
+:xjrne xjrneRelAddr    is xjrneRelAddr {
+    jrneOp(xjrneRelAddr);
+}
+
+sjrnedRelAddr: relAddr    is class=6 & imm13s; class=0 & c0_op1=13 & c0_d=1 & sign8u
     [ relAddr=inst_next - 2 + ((imm13s << 9) | (sign8u * 2)); ] {
+    export *:4 relAddr;
 }
 
-:"xjrne.d" relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=13 & c0_d=1 & sign8u
+:"sjrne.d" sjrnedRelAddr    is sjrnedRelAddr {
+    jrneDOp(sjrnedRelAddr);
+}
+
+xjrnedRelAddr: relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=13 & c0_d=1 & sign8u
     [ relAddr=inst_next - 2 + (((dImm13s_hi & 0x1ff8) << 19) | (dImm13_lo << 9) | (sign8u * 2)); ] {
-    
+    export *:4 relAddr;
 }
 
-:scall relAddr    is class=6 & imm13s; class=0 & c0_op1=14 & c0_d=0 & sign8u
+:"xjrne.d" xjrnedRelAddr    is xjrnedRelAddr {
+    jrneDOp(xjrnedRelAddr);
+}
+
+SCallRelAddr: relAddr    is class=6 & imm13s; class=0 & c0_op1=14 & c0_d=0 & sign8u
     [ relAddr=inst_next - 2 + ((imm13s << 9) | (sign8u * 2)); ] {
+    export *:4 relAddr;
 }
 
-:xcall relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=14 & c0_d=0 & sign8u
+:scall SCallRelAddr     is SCallRelAddr {
+    callOp(SCallRelAddr);
+}
+
+XCallRelAddr: relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=14 & c0_d=0 & sign8u
     [ relAddr=inst_next - 2 + (((dImm13s_hi & 0x1ff8) << 19) | (dImm13_lo << 9) | (sign8u * 2)); ] {
-    
+    export *:4 relAddr;
 }
 
-:"scall.d" relAddr    is class=6 & imm13s; class=0 & c0_op1=14 & c0_d=1 & sign8u
+:xcall XCallRelAddr     is XCallRelAddr {
+    callOp(XCallRelAddr);
+}
+
+SCallDRelAddr: relAddr    is class=6 & imm13s; class=0 & c0_op1=14 & c0_d=1 & sign8u
     [ relAddr=inst_next - 2 + ((imm13s << 9) | (sign8u * 2)); ] {
+    export *:4 relAddr;
 }
 
-:"xcall.d" relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=14 & c0_d=1 & sign8u
+:"scall.d" SCallDRelAddr    is SCallDRelAddr {
+    callDOp(SCallDRelAddr);
+}
+
+XCallDRelAddr: relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=14 & c0_d=1 & sign8u
     [ relAddr=inst_next - 2 + (((dImm13s_hi & 0x1ff8) << 19) | (dImm13_lo << 9) | (sign8u * 2)); ] {
-    
+    export *:4 relAddr;
 }
 
-:sjp relAddr    is class=6 & imm13s; class=0 & c0_op1=15 & c0_d=0 & sign8u
+:"xcall.d" XCallDRelAddr    is XCallDRelAddr {
+    callDOp(XCallDRelAddr);
+}
+
+sjpRelAddr: relAddr    is class=6 & imm13s; class=0 & c0_op1=15 & c0_d=0 & sign8u
     [ relAddr=inst_next - 2 + ((imm13s << 9) | (sign8u * 2)); ] {
+    export *:4 relAddr;
 }
 
-:xjp relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=15 & c0_d=0 & sign8u
+:sjp sjpRelAddr    is sjpRelAddr {
+    jpOp(sjpRelAddr);
+}
+
+xjpRelAddr: relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=15 & c0_d=0 & sign8u
     [ relAddr=inst_next - 2 + (((dImm13s_hi & 0x1ff8) << 19) | (dImm13_lo << 9) | (sign8u * 2)); ] {
-    
+    export *:4 relAddr;
 }
 
-:"sjp.d" relAddr    is class=6 & imm13s; class=0 & c0_op1=15 & c0_d=1 & sign8u
+:xjp xjpRelAddr    is xjpRelAddr {
+    jpOp(xjpRelAddr);
+}
+
+sjpdRelAddr: relAddr    is class=6 & imm13s; class=0 & c0_op1=15 & c0_d=1 & sign8u
     [ relAddr=inst_next - 2 + ((imm13s << 9) | (sign8u * 2)); ] {
+    export *:4 relAddr;
 }
 
-:"xjp.d" relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=15 & c0_d=1 & sign8u
+:"sjp.d" sjpdRelAddr    is sjpdRelAddr {
+    delayslot(2);
+    jpOp(sjpdRelAddr);
+}
+
+xjpdRelAddr: relAddr    is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=0 & c0_op1=15 & c0_d=1 & sign8u
     [ relAddr=inst_next - 2 + (((dImm13s_hi & 0x1ff8) << 19) | (dImm13_lo << 9) | (sign8u * 2)); ] {
-    
+    export *:4 relAddr;
+}
+
+:"xjp.d" xjpdRelAddr    is xjpdRelAddr {
+    delayslot(2);
+    jpOp(xjpdRelAddr);
 }
