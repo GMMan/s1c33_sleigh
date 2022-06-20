@@ -130,7 +130,7 @@ ExtContextClear:    is extContext_present=1
 }
 
 @include "s1c33_macros.sinc"
-
+@include "s1c33_pushn_popn.sinc"
 
 # Instructions
 
@@ -148,12 +148,12 @@ ExtContextClear:    is extContext_present=1
     halt();
 }
 
-:pushn %rx_lo   is class=0 & c0_op1=1 & c0_d=0 & c01_op2=0 & c0_const=0 & rx_lo {
-
+:pushn %rx_lo   is class=0 & c0_op1=1 & c0_d=0 & c01_op2=0 & c0_const=0 & rx_lo & pushnHead {
+    build pushnHead;
 }
 
-:popn %rx_lo   is class=0 & c0_op1=1 & c0_d=0 & c01_op2=1 & c0_const=0 & rx_lo {
-
+:popn %rx_lo   is class=0 & c0_op1=1 & c0_d=0 & c01_op2=1 & c0_const=0 & rx_lo & popnHead{
+    build popnHead;
 }
 
 :jpr %rx_lo   is class=0 & c0_op1=1 & c0_d=0 & c01_op2=3 & c0_const=0 & rx_lo {

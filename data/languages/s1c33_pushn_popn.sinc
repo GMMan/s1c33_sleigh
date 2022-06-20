@@ -1,0 +1,331 @@
+# S1C33 pushn/popn helpers
+
+pushnR0: is epsilon {
+    stackPush(r0);
+}
+
+pushnR1: is epsilon & pushnR0 {
+    stackPush(r1);
+    build pushnR0;
+}
+
+pushnR2: is epsilon & pushnR1 {
+    stackPush(r2);
+    build pushnR1;
+}
+
+pushnR3: is epsilon & pushnR2 {
+    stackPush(r3);
+    build pushnR2;
+}
+
+pushnR4: is epsilon & pushnR3 {
+    stackPush(r4);
+    build pushnR3;
+}
+
+pushnR5: is epsilon & pushnR4 {
+    stackPush(r5);
+    build pushnR4;
+}
+
+pushnR6: is epsilon & pushnR5 {
+    stackPush(r6);
+    build pushnR5;
+}
+
+pushnR7: is epsilon & pushnR6 {
+    stackPush(r7);
+    build pushnR6;
+}
+
+pushnR8: is epsilon & pushnR7 {
+    stackPush(r8);
+    build pushnR7;
+}
+
+pushnR9: is epsilon & pushnR8 {
+    stackPush(r9);
+    build pushnR8;
+}
+
+pushnR10: is epsilon & pushnR9 {
+    stackPush(r10);
+    build pushnR9;
+}
+
+pushnR11: is epsilon & pushnR10 {
+    stackPush(r11);
+    build pushnR10;
+}
+
+pushnR12: is epsilon & pushnR11 {
+    stackPush(r12);
+    build pushnR11;
+}
+
+pushnR13: is epsilon & pushnR12 {
+    stackPush(r13);
+    build pushnR12;
+}
+
+pushnR14: is epsilon & pushnR13 {
+    stackPush(r14);
+    build pushnR13;
+}
+
+pushnR15: is epsilon & pushnR14 {
+    stackPush(r15);
+    build pushnR14;
+}
+
+pushnHead: is rx_lo=0 & pushnR0 {
+    build pushnR0;
+}
+
+pushnHead: is rx_lo=1 & pushnR1 {
+    build pushnR1;
+}
+
+pushnHead: is rx_lo=2 & pushnR2 {
+    build pushnR2;
+}
+
+pushnHead: is rx_lo=3 & pushnR3 {
+    build pushnR3;
+}
+
+pushnHead: is rx_lo=4 & pushnR4 {
+    build pushnR4;
+}
+
+pushnHead: is rx_lo=5 & pushnR5 {
+    build pushnR5;
+}
+
+pushnHead: is rx_lo=6 & pushnR6 {
+    build pushnR6;
+}
+
+pushnHead: is rx_lo=7 & pushnR7 {
+    build pushnR7;
+}
+
+pushnHead: is rx_lo=8 & pushnR8 {
+    build pushnR8;
+}
+
+pushnHead: is rx_lo=9 & pushnR9 {
+    build pushnR9;
+}
+
+pushnHead: is rx_lo=10 & pushnR10 {
+    build pushnR10;
+}
+
+pushnHead: is rx_lo=11 & pushnR11 {
+    build pushnR11;
+}
+
+pushnHead: is rx_lo=12 & pushnR12 {
+    build pushnR12;
+}
+
+pushnHead: is rx_lo=13 & pushnR13 {
+    build pushnR13;
+}
+
+pushnHead: is rx_lo=14 & pushnR14 {
+    build pushnR14;
+}
+
+pushnHead: is rx_lo=15 & pushnR15 {
+    build pushnR15;
+}
+
+# I don't know how to recurse upwards, so just going to list every single
+# possible value for popping here...
+
+popnHead: is rx_lo=0 {
+    stackPop(r0);
+}
+
+popnHead: is rx_lo=1 {
+    stackPop(r0);
+    stackPop(r1);
+}
+
+popnHead: is rx_lo=2 {
+    stackPop(r0);
+    stackPop(r1);
+    stackPop(r2);
+}
+
+popnHead: is rx_lo=3 {
+    stackPop(r0);
+    stackPop(r1);
+    stackPop(r2);
+    stackPop(r3);
+}
+
+popnHead: is rx_lo=4 {
+    stackPop(r0);
+    stackPop(r1);
+    stackPop(r2);
+    stackPop(r3);
+    stackPop(r4);
+}
+
+popnHead: is rx_lo=5 {
+    stackPop(r0);
+    stackPop(r1);
+    stackPop(r2);
+    stackPop(r3);
+    stackPop(r4);
+    stackPop(r5);
+}
+
+popnHead: is rx_lo=6 {
+    stackPop(r0);
+    stackPop(r1);
+    stackPop(r2);
+    stackPop(r3);
+    stackPop(r4);
+    stackPop(r5);
+    stackPop(r6);
+}
+
+popnHead: is rx_lo=7 {
+    stackPop(r0);
+    stackPop(r1);
+    stackPop(r2);
+    stackPop(r3);
+    stackPop(r4);
+    stackPop(r5);
+    stackPop(r6);
+    stackPop(r7);
+}
+
+popnHead: is rx_lo=8 {
+    stackPop(r0);
+    stackPop(r1);
+    stackPop(r2);
+    stackPop(r3);
+    stackPop(r4);
+    stackPop(r5);
+    stackPop(r6);
+    stackPop(r7);
+    stackPop(r8);
+}
+
+popnHead: is rx_lo=9 {
+    stackPop(r0);
+    stackPop(r1);
+    stackPop(r2);
+    stackPop(r3);
+    stackPop(r4);
+    stackPop(r5);
+    stackPop(r6);
+    stackPop(r7);
+    stackPop(r8);
+    stackPop(r9);
+}
+
+popnHead: is rx_lo=10 {
+    stackPop(r0);
+    stackPop(r1);
+    stackPop(r2);
+    stackPop(r3);
+    stackPop(r4);
+    stackPop(r5);
+    stackPop(r6);
+    stackPop(r7);
+    stackPop(r8);
+    stackPop(r9);
+    stackPop(r10);
+}
+
+popnHead: is rx_lo=11 {
+    stackPop(r0);
+    stackPop(r1);
+    stackPop(r2);
+    stackPop(r3);
+    stackPop(r4);
+    stackPop(r5);
+    stackPop(r6);
+    stackPop(r7);
+    stackPop(r8);
+    stackPop(r9);
+    stackPop(r10);
+    stackPop(r11);
+}
+
+popnHead: is rx_lo=12 {
+    stackPop(r0);
+    stackPop(r1);
+    stackPop(r2);
+    stackPop(r3);
+    stackPop(r4);
+    stackPop(r5);
+    stackPop(r6);
+    stackPop(r7);
+    stackPop(r8);
+    stackPop(r9);
+    stackPop(r10);
+    stackPop(r11);
+    stackPop(r12);
+}
+
+popnHead: is rx_lo=13 {
+    stackPop(r0);
+    stackPop(r1);
+    stackPop(r2);
+    stackPop(r3);
+    stackPop(r4);
+    stackPop(r5);
+    stackPop(r6);
+    stackPop(r7);
+    stackPop(r8);
+    stackPop(r9);
+    stackPop(r10);
+    stackPop(r11);
+    stackPop(r12);
+    stackPop(r13);
+}
+
+popnHead: is rx_lo=14 {
+    stackPop(r0);
+    stackPop(r1);
+    stackPop(r2);
+    stackPop(r3);
+    stackPop(r4);
+    stackPop(r5);
+    stackPop(r6);
+    stackPop(r7);
+    stackPop(r8);
+    stackPop(r9);
+    stackPop(r10);
+    stackPop(r11);
+    stackPop(r12);
+    stackPop(r13);
+    stackPop(r14);
+}
+
+popnHead: is rx_lo=15 {
+    stackPop(r0);
+    stackPop(r1);
+    stackPop(r2);
+    stackPop(r3);
+    stackPop(r4);
+    stackPop(r5);
+    stackPop(r6);
+    stackPop(r7);
+    stackPop(r8);
+    stackPop(r9);
+    stackPop(r10);
+    stackPop(r11);
+    stackPop(r12);
+    stackPop(r13);
+    stackPop(r14);
+    stackPop(r15);
+}
