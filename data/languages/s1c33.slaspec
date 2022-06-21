@@ -120,6 +120,8 @@ define pcodeop coproc_exec;
 define pcodeop coproc_load;
 define pcodeop coproc_store;
 define pcodeop coproc_get_flags;
+define pcodeop int_enable;
+define pcodeop int_disable;
 
 RelSign8: relAddr is sign8 [ relAddr=inst_start + sign8 * 2; ] { export *[ram]:4 relAddr; }
 DoubleImm5: imm5 is imm4_imm5l [ imm5=imm4_imm5l + 16; ] { local tmp:4 = imm5; export tmp; }
@@ -768,13 +770,25 @@ ExtContextClear:    is extContext_present=1
     psr_vreg = 0;
 }
 
+# Special cases to make interrupt enable/disable stand out
+
+:psrset imm5_lo       is class=5 & op1=7 & op2=3 & op3=1 & zero_55=0 & imm5_lo & psr_vreg=4 {
+    ie_flag = 1;
+    int_enable();
+}
+
+:psrclr imm5_lo       is class=5 & op1=7 & op2=3 & op3=2 & zero_55=0 & imm5_lo & psr_vreg=4 {
+    ie_flag = 0;
+    int_disable();
+}
+
 
 # Class 6
 
 # Used for instructions where there is no x variant on the assembler
 :ext imm13      is class=6 & imm13
     [ extContext_present=1; globalset(inst_next, extContext_present); ] {
-    extContext_val=(extContext_val << 13) | imm13; 
+    extContext_val=(extContext_val << 13) | imm13;
 }
 
 @include "s1c33_ext.sinc"
