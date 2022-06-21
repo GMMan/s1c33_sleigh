@@ -7,6 +7,7 @@
             variant="PE"
             version="1.0"
             slafile="s1c33.sla"
+            manualindexfile="s1c33.idx"
             processorspec="s1c33.pspec"
             id="S1C33:LE:32:PE">
     <description>Epson S1C33 Family C33 PE</description>
