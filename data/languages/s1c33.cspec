@@ -57,6 +57,8 @@
         </pentry>
       </output>
       <unaffected>
+        <varnode space="ram" offset="0" size="4"/>
+        <register name="sp"/>
         <register name="r0"/>
         <register name="r1"/>
         <register name="r2"/>

@@ -13,6 +13,5 @@ TODOs
 -----
 - Validate proper implementation of P-code
 - Add flag packing/unpacking for direct `%psr` modifications
-- Figure out why `%sp` is in an invalid spacebase
 - Potentially simplify extended instruction constructors
 - Recheck pack rules

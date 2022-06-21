@@ -121,7 +121,7 @@ define pcodeop coproc_load;
 define pcodeop coproc_store;
 define pcodeop coproc_get_flags;
 
-RelSign8: relAddr is sign8 [ relAddr=inst_start + sign8 * 2; ] { export *:4 relAddr; }
+RelSign8: relAddr is sign8 [ relAddr=inst_start + sign8 * 2; ] { export *[ram]:4 relAddr; }
 DoubleImm5: imm5 is imm4_imm5l [ imm5=imm4_imm5l + 16; ] { local tmp:4 = imm5; export tmp; }
 
 ExtContextClear:    is extContext_present=1
