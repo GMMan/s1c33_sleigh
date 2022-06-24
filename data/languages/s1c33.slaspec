@@ -539,15 +539,15 @@ ExtContextClear:    is extContext_present=1
 }
 
 :"ld.h" %rx_lo,[%"sp"+imm6_hi]  is class=2 & op1=2 & imm6_hi & rx_lo {
-    rx_lo = sext(*:2 (sp + imm6_hi));
+    rx_lo = sext(*:2 (sp + imm6_hi * 2));
 }
 
 :"ld.uh" %rx_lo,[%"sp"+imm6_hi]  is class=2 & op1=3 & imm6_hi & rx_lo {
-    rx_lo = zext(*:2 (sp + imm6_hi));
+    rx_lo = zext(*:2 (sp + imm6_hi * 2));
 }
 
 :"ld.w" %rx_lo,[%"sp"+imm6_hi]  is class=2 & op1=4 & imm6_hi & rx_lo {
-    rx_lo = * (sp + imm6_hi);
+    rx_lo = * (sp + imm6_hi * 4);
 }
 
 :"ld.b" [%"sp"+imm6_hi],%rx_lo  is class=2 & op1=5 & imm6_hi & rx_lo {
@@ -555,11 +555,11 @@ ExtContextClear:    is extContext_present=1
 }
 
 :"ld.h" [%"sp"+imm6_hi],%rx_lo  is class=2 & op1=6 & imm6_hi & rx_lo {
-    * (sp + imm6_hi) = rx_lo:2;
+    * (sp + imm6_hi * 2) = rx_lo:2;
 }
 
 :"ld.w" [%"sp"+imm6_hi],%rx_lo  is class=2 & op1=7 & imm6_hi & rx_lo {
-    * (sp + imm6_hi) = rx_lo;
+    * (sp + imm6_hi * 4) = rx_lo;
 }
 
 
