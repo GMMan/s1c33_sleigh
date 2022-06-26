@@ -48,7 +48,7 @@
           <addr space="stack" offset="4"/>
         </pentry>
       </input>
-      <output>
+      <output killedbycall="true">
         <pentry minsize="1" maxsize="4">
           <register name="r4"/>
         </pentry>
@@ -65,6 +65,7 @@
         <register name="r3"/>
       </unaffected>
       <killedbycall>
+        <register name="r5"/>
         <register name="r10"/>
         <register name="r11"/>
         <register name="r12"/>
