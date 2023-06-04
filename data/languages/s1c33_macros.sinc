@@ -27,7 +27,7 @@ macro sbcFlags(op1, op2) {
 
 macro subFlags(op1, op2) {
     v_flag = sborrow(op1, op2);
-    c_flag = op1 <= op2;
+    c_flag = op1 < op2;
 }
 
 
