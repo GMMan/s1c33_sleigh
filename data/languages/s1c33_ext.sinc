@@ -13,6 +13,15 @@
     addOp(rx_lo, ext_imm:4);
 }
 
+:xadd %rx_lo,%rx_hi,imm13     is class=6 & imm13; class=1 & c1_op1=0 & op2=2 & rx_hi & rx_lo {
+    addExtOp(rx_lo, rx_hi, imm13);
+}
+
+:xadd %rx_lo,%rx_hi,ext_imm     is dClass0=6 & dClass1=6 & dImm13_hi & dImm13_lo; class=1 & c1_op1=0 & op2=2 & rx_hi & rx_lo
+    [ ext_imm=(dImm13_hi << 13) | dImm13_lo; ] {
+    addExtOp(rx_lo, rx_hi, ext_imm:4);
+}
+
 :xsub %rx_lo,ext_imm     is class=6 & imm13; class=3 & op1=1 & imm6_hi & rx_lo
     [ ext_imm=(imm13 << 6) | imm6_hi; ] {
     subOp(rx_lo, ext_imm);
@@ -21,6 +30,15 @@
 :xsub %rx_lo,ext_imm     is dClass0=6 & dClass1=6 & dImm13_hi & dImm13_lo; class=3 & op1=1 & imm6_hi & rx_lo
     [ ext_imm=(dImm13_hi << 19) | (dImm13_lo << 6) | imm6_hi; ] {
     subOp(rx_lo, ext_imm);
+}
+
+:xsub %rx_lo,%rx_hi,imm13     is class=6 & imm13; class=1 & c1_op1=1 & op2=2 & rx_hi & rx_lo {
+    subExtOp(rx_lo, rx_hi, imm13);
+}
+
+:xsub %rx_lo,%rx_hi,ext_imm     is dClass0=6 & dClass1=6 & dImm13_hi & dImm13_lo; class=1 & c1_op1=1 & op2=2 & rx_hi & rx_lo
+    [ ext_imm=(dImm13_hi << 13) | dImm13_lo; ] {
+    subExtOp(rx_lo, rx_hi, ext_imm:4);
 }
 
 
@@ -34,6 +52,15 @@
 :xcmp %rx_lo,ext_imm     is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=3 & op1=2 & sign6u & rx_lo
     [ ext_imm=(dImm13s_hi << 19) | (dImm13_lo << 6) | sign6u; ] {
     cmpOp(rx_lo, ext_imm);
+}
+
+:xcmp %rx_lo,%rx_hi,imm13     is class=6 & imm13; class=1 & c1_op1=2 & op2=2 & rx_hi & rx_lo {
+    cmpOp(rx_hi, imm13);
+}
+
+:xcmp %rx_lo,%rx_hi,ext_imm     is dClass0=6 & dClass1=6 & dImm13_hi & dImm13_lo; class=1 & c1_op1=2 & op2=2 & rx_hi & rx_lo
+    [ ext_imm=(dImm13_hi << 13) | dImm13_lo; ] {
+    cmpOp(rx_hi, ext_imm:4);
 }
 
 
@@ -51,6 +78,16 @@
     andOp(rx_lo, tmp);
 }
 
+:xand %rx_lo,%rx_hi,imm13     is class=6 & imm13; class=1 & c1_op1=4 & op2=2 & rx_hi & rx_lo {
+    andExtOp(rx_lo, rx_hi, imm13);
+}
+
+:xand %rx_lo,%rx_hi,ext_imm     is dClass0=6 & dClass1=6 & dImm13_hi & dImm13_lo; class=1 & c1_op1=4 & op2=2 & rx_hi & rx_lo
+    [ ext_imm=(dImm13_hi << 13) | dImm13_lo; ] {
+    local tmp:4 = ext_imm;
+    andExtOp(rx_lo, rx_hi, tmp);
+}
+
 :xoor %rx_lo,ext_imm     is class=6 & imm13s; class=3 & op1=5 & sign6u & rx_lo
     [ ext_imm=(imm13s << 6) | sign6u; ] {
     orOp(rx_lo, ext_imm);
@@ -61,6 +98,16 @@
     orOp(rx_lo, ext_imm);
 }
 
+:xoor %rx_lo,%rx_hi,imm13     is class=6 & imm13; class=1 & c1_op1=5 & op2=2 & rx_hi & rx_lo {
+    orExtOp(rx_lo, rx_hi, imm13);
+}
+
+:xoor %rx_lo,%rx_hi,ext_imm     is dClass0=6 & dClass1=6 & dImm13_hi & dImm13_lo; class=1 & c1_op1=5 & op2=2 & rx_hi & rx_lo
+    [ ext_imm=(dImm13_hi << 13) | dImm13_lo; ] {
+    local tmp:4 = ext_imm;
+    orExtOp(rx_lo, rx_hi, tmp);
+}
+
 :xxor %rx_lo,ext_imm     is class=6 & imm13s; class=3 & op1=6 & sign6u & rx_lo
     [ ext_imm=(imm13s << 6) | sign6u; ] {
     xorOp(rx_lo, ext_imm);
@@ -69,6 +116,16 @@
 :xxor %rx_lo,ext_imm     is dClass0=6 & dClass1=6 & dImm13s_hi & dImm13_lo; class=3 & op1=6 & sign6u & rx_lo
     [ ext_imm=(dImm13s_hi << 19) | (dImm13_lo << 6) | sign6u; ] {
     xorOp(rx_lo, ext_imm);
+}
+
+:xxor %rx_lo,%rx_hi,imm13     is class=6 & imm13; class=1 & c1_op1=6 & op2=2 & rx_hi & rx_lo {
+    xorExtOp(rx_lo, rx_hi, imm13);
+}
+
+:xxor %rx_lo,%rx_hi,ext_imm     is dClass0=6 & dClass1=6 & dImm13_hi & dImm13_lo; class=1 & c1_op1=6 & op2=2 & rx_hi & rx_lo
+    [ ext_imm=(dImm13_hi << 13) | dImm13_lo; ] {
+    local tmp:4 = ext_imm;
+    xorExtOp(rx_lo, rx_hi, tmp);
 }
 
 :xnot %rx_lo,ext_imm     is class=6 & imm13s; class=3 & op1=7 & sign6u & rx_lo

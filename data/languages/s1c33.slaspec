@@ -22,11 +22,6 @@ define register offset=0x40 size=4
 define register offset=0x80 size=1
     [n_flag z_flag v_flag c_flag ie_flag _ _ _ il];
 
-# ext value holder
-define register offset=0x100 size=4 extContext;
-define register offset=0x104 size=4
-    [extContext_val];
-
 define token instr(16)
     # Shared
     class=(13, 15)
@@ -94,11 +89,6 @@ define token doubleInstr(32)
     dImm13_lo=(16, 28)
 ;
 
-# Holds successive ext values for ext instructions with no assembler pseudo-instructions
-define context extContext
-    extContext_present=(0, 0)
-;
-
 # Attach registers
 attach variables [rx_lo rx_hi] [r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15];
 attach variables [sd] [psr sp alr ahr _ _ _ _ ttbr _ _ _ _ _ _ pc];
@@ -125,11 +115,6 @@ define pcodeop int_disable;
 
 RelSign8: relAddr is sign8 [ relAddr=inst_start + sign8 * 2; ] { export *[ram]:4 relAddr; }
 DoubleImm5: imm5 is imm4_imm5l [ imm5=imm4_imm5l + 16; ] { local tmp:4 = imm5; export tmp; }
-
-ExtContextClear:    is extContext_present=1
-    [ extContext_present=0; globalset(inst_next, extContext_present); ] {
-    extContext_val=0;
-}
 
 @include "s1c33_macros.sinc"
 @include "s1c33_pushn_popn.sinc"
@@ -380,12 +365,6 @@ ExtContextClear:    is extContext_present=1
     addOp(rx_lo, rx_hi);
 }
 
-:add %rx_lo,%rx_hi   is class=1 & c1_op1=0 & op2=2 & rx_hi & rx_lo & ExtContextClear {
-    local tmp:4 = extContext_val;
-    addExtOp(rx_lo, rx_hi, tmp);
-    build ExtContextClear;
-}
-
 :srl %rx_lo,DoubleImm5     is class=1 & c1_op1=0 & op2=3 & DoubleImm5 & rx_lo {
     srlOp(rx_lo, DoubleImm5);
 }
@@ -403,11 +382,6 @@ ExtContextClear:    is extContext_present=1
     subOp(rx_lo, rx_hi);
 }
 
-:sub %rx_lo,%rx_hi   is class=1 & c1_op1=1 & op2=2 & rx_hi & rx_lo & ExtContextClear {
-    subExtOp(rx_lo, rx_hi, extContext_val);
-    build ExtContextClear;
-}
-
 :sll %rx_lo,DoubleImm5     is class=1 & c1_op1=1 & op2=3 & DoubleImm5 & rx_lo {
     slOp(rx_lo, DoubleImm5);
 }
@@ -423,11 +397,6 @@ ExtContextClear:    is extContext_present=1
 
 :cmp %rx_lo,%rx_hi   is class=1 & c1_op1=2 & op2=2 & rx_hi & rx_lo {
     cmpOp(rx_lo, rx_hi);
-}
-
-:cmp %rx_lo,%rx_hi   is class=1 & c1_op1=2 & op2=2 & rx_hi & rx_lo & ExtContextClear {
-    cmpOp(rx_hi, extContext_val);
-    build ExtContextClear;
 }
 
 :sra %rx_lo,DoubleImm5     is class=1 & c1_op1=2 & op2=3 & DoubleImm5 & rx_lo {
@@ -464,12 +433,6 @@ ExtContextClear:    is extContext_present=1
     andOp(rx_lo, rx_hi);
 }
 
-:and %rx_lo,%rx_hi   is class=1 & c1_op1=4 & op2=2 & rx_hi & rx_lo & ExtContextClear {
-    local tmp:4 = extContext_val;
-    andExtOp(rx_lo, rx_hi, tmp);
-    build ExtContextClear;
-}
-
 :rr %rx_lo,DoubleImm5     is class=1 & c1_op1=4 & op2=3 & DoubleImm5 & rx_lo {
     rrOp(rx_lo, DoubleImm5);
 }
@@ -487,11 +450,6 @@ ExtContextClear:    is extContext_present=1
     orOp(rx_lo, rx_hi);
 }
 
-:or %rx_lo,%rx_hi   is class=1 & c1_op1=5 & op2=2 & rx_hi & rx_lo & ExtContextClear {
-    orExtOp(rx_lo, rx_hi, extContext_val);
-    build ExtContextClear;
-}
-
 :rl %rx_lo,DoubleImm5     is class=1 & c1_op1=5 & op2=3 & DoubleImm5 & rx_lo {
     rlOp(rx_lo, DoubleImm5);
 }
@@ -507,11 +465,6 @@ ExtContextClear:    is extContext_present=1
 
 :xor %rx_lo,%rx_hi   is class=1 & c1_op1=6 & op2=2 & rx_hi & rx_lo {
     xorOp(rx_lo, rx_hi);
-}
-
-:xor %rx_lo,%rx_hi   is class=1 & c1_op1=6 & op2=2 & rx_hi & rx_lo & ExtContextClear {
-    xorExtOp(rx_lo, rx_hi, extContext_val);
-    build ExtContextClear;
 }
 
 :"ld.w" [%rx_hi],%rx_lo    is class=1 & c1_op1=7 & op2=0 & rx_hi & rx_lo {
@@ -786,9 +739,8 @@ ExtContextClear:    is extContext_present=1
 # Class 6
 
 # Used for instructions where there is no x variant on the assembler
-:ext imm13      is class=6 & imm13
-    [ extContext_present=1; globalset(inst_next, extContext_present); ] {
-    extContext_val=(extContext_val << 13) | imm13;
+:ext imm13      is class=6 & imm13 {
+    # Nothing here anymore
 }
 
 @include "s1c33_ext.sinc"
