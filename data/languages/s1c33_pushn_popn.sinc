@@ -143,189 +143,145 @@ pushnHead: is rx_lo=15 & pushnR15 {
     build pushnR15;
 }
 
-# I don't know how to recurse upwards, so just going to list every single
-# possible value for popping here...
-
-popnHead: is rx_lo=0 {
-    stackPop(r0);
+popnR0: is epsilon {
+    stackPush(r0);
 }
 
-popnHead: is rx_lo=1 {
-    stackPop(r0);
-    stackPop(r1);
+popnR1: is epsilon & popnR0 {
+    build popnR0;
+    stackPush(r1);
 }
 
-popnHead: is rx_lo=2 {
-    stackPop(r0);
-    stackPop(r1);
-    stackPop(r2);
+popnR2: is epsilon & popnR1 {
+    build popnR1;
+    stackPush(r2);
 }
 
-popnHead: is rx_lo=3 {
-    stackPop(r0);
-    stackPop(r1);
-    stackPop(r2);
-    stackPop(r3);
+popnR3: is epsilon & popnR2 {
+    build popnR2;
+    stackPush(r3);
 }
 
-popnHead: is rx_lo=4 {
-    stackPop(r0);
-    stackPop(r1);
-    stackPop(r2);
-    stackPop(r3);
-    stackPop(r4);
+popnR4: is epsilon & popnR3 {
+    build popnR3;
+    stackPush(r4);
 }
 
-popnHead: is rx_lo=5 {
-    stackPop(r0);
-    stackPop(r1);
-    stackPop(r2);
-    stackPop(r3);
-    stackPop(r4);
-    stackPop(r5);
+popnR5: is epsilon & popnR4 {
+    build popnR4;
+    stackPush(r5);
 }
 
-popnHead: is rx_lo=6 {
-    stackPop(r0);
-    stackPop(r1);
-    stackPop(r2);
-    stackPop(r3);
-    stackPop(r4);
-    stackPop(r5);
-    stackPop(r6);
+popnR6: is epsilon & popnR5 {
+    build popnR5;
+    stackPush(r6);
 }
 
-popnHead: is rx_lo=7 {
-    stackPop(r0);
-    stackPop(r1);
-    stackPop(r2);
-    stackPop(r3);
-    stackPop(r4);
-    stackPop(r5);
-    stackPop(r6);
-    stackPop(r7);
+popnR7: is epsilon & popnR6 {
+    build popnR6;
+    stackPush(r7);
 }
 
-popnHead: is rx_lo=8 {
-    stackPop(r0);
-    stackPop(r1);
-    stackPop(r2);
-    stackPop(r3);
-    stackPop(r4);
-    stackPop(r5);
-    stackPop(r6);
-    stackPop(r7);
-    stackPop(r8);
+popnR8: is epsilon & popnR7 {
+    build popnR7;
+    stackPush(r8);
 }
 
-popnHead: is rx_lo=9 {
-    stackPop(r0);
-    stackPop(r1);
-    stackPop(r2);
-    stackPop(r3);
-    stackPop(r4);
-    stackPop(r5);
-    stackPop(r6);
-    stackPop(r7);
-    stackPop(r8);
-    stackPop(r9);
+popnR9: is epsilon & popnR8 {
+    build popnR8;
+    stackPush(r9);
 }
 
-popnHead: is rx_lo=10 {
-    stackPop(r0);
-    stackPop(r1);
-    stackPop(r2);
-    stackPop(r3);
-    stackPop(r4);
-    stackPop(r5);
-    stackPop(r6);
-    stackPop(r7);
-    stackPop(r8);
-    stackPop(r9);
-    stackPop(r10);
+popnR10: is epsilon & popnR9 {
+    build popnR9;
+    stackPush(r10);
 }
 
-popnHead: is rx_lo=11 {
-    stackPop(r0);
-    stackPop(r1);
-    stackPop(r2);
-    stackPop(r3);
-    stackPop(r4);
-    stackPop(r5);
-    stackPop(r6);
-    stackPop(r7);
-    stackPop(r8);
-    stackPop(r9);
-    stackPop(r10);
-    stackPop(r11);
+popnR11: is epsilon & popnR10 {
+    build popnR10;
+    stackPush(r11);
 }
 
-popnHead: is rx_lo=12 {
-    stackPop(r0);
-    stackPop(r1);
-    stackPop(r2);
-    stackPop(r3);
-    stackPop(r4);
-    stackPop(r5);
-    stackPop(r6);
-    stackPop(r7);
-    stackPop(r8);
-    stackPop(r9);
-    stackPop(r10);
-    stackPop(r11);
-    stackPop(r12);
+popnR12: is epsilon & popnR11 {
+    build popnR11;
+    stackPush(r12);
 }
 
-popnHead: is rx_lo=13 {
-    stackPop(r0);
-    stackPop(r1);
-    stackPop(r2);
-    stackPop(r3);
-    stackPop(r4);
-    stackPop(r5);
-    stackPop(r6);
-    stackPop(r7);
-    stackPop(r8);
-    stackPop(r9);
-    stackPop(r10);
-    stackPop(r11);
-    stackPop(r12);
-    stackPop(r13);
+popnR13: is epsilon & popnR12 {
+    build popnR12;
+    stackPush(r13);
 }
 
-popnHead: is rx_lo=14 {
-    stackPop(r0);
-    stackPop(r1);
-    stackPop(r2);
-    stackPop(r3);
-    stackPop(r4);
-    stackPop(r5);
-    stackPop(r6);
-    stackPop(r7);
-    stackPop(r8);
-    stackPop(r9);
-    stackPop(r10);
-    stackPop(r11);
-    stackPop(r12);
-    stackPop(r13);
-    stackPop(r14);
+popnR14: is epsilon & popnR13 {
+    build popnR13;
+    stackPush(r14);
 }
 
-popnHead: is rx_lo=15 {
-    stackPop(r0);
-    stackPop(r1);
-    stackPop(r2);
-    stackPop(r3);
-    stackPop(r4);
-    stackPop(r5);
-    stackPop(r6);
-    stackPop(r7);
-    stackPop(r8);
-    stackPop(r9);
-    stackPop(r10);
-    stackPop(r11);
-    stackPop(r12);
-    stackPop(r13);
-    stackPop(r14);
-    stackPop(r15);
+popnR15: is epsilon & popnR14 {
+    build popnR14;
+    stackPush(r15);
+}
+
+popnHead: is rx_lo=0 & popnR0 {
+    build popnR0;
+}
+
+popnHead: is rx_lo=1 & popnR1 {
+    build popnR1;
+}
+
+popnHead: is rx_lo=2 & popnR2 {
+    build popnR2;
+}
+
+popnHead: is rx_lo=3 & popnR3 {
+    build popnR3;
+}
+
+popnHead: is rx_lo=4 & popnR4 {
+    build popnR4;
+}
+
+popnHead: is rx_lo=5 & popnR5 {
+    build popnR5;
+}
+
+popnHead: is rx_lo=6 & popnR6 {
+    build popnR6;
+}
+
+popnHead: is rx_lo=7 & popnR7 {
+    build popnR7;
+}
+
+popnHead: is rx_lo=8 & popnR8 {
+    build popnR8;
+}
+
+popnHead: is rx_lo=9 & popnR9 {
+    build popnR9;
+}
+
+popnHead: is rx_lo=10 & popnR10 {
+    build popnR10;
+}
+
+popnHead: is rx_lo=11 & popnR11 {
+    build popnR11;
+}
+
+popnHead: is rx_lo=12 & popnR12 {
+    build popnR12;
+}
+
+popnHead: is rx_lo=13 & popnR13 {
+    build popnR13;
+}
+
+popnHead: is rx_lo=14 & popnR14 {
+    build popnR14;
+}
+
+popnHead: is rx_lo=15 & popnR15 {
+    build popnR15;
 }
