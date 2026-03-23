@@ -7,6 +7,7 @@ processor.
 Features
 --------
 - Disassembly of all C33 PE instructions, including extended instructions
+- P-code implemented for all of the instructions
 
 TODOs
 -----
