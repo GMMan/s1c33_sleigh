@@ -316,3 +316,27 @@ macro xorExtOp(rd, rs, imm) {
     resultFlags(rd);
     v_flag = 0;
 }
+
+macro psrUnpack() {
+    n_flag = psr[0,1];
+    z_flag = psr[1,1];
+    v_flag = psr[2,1];
+    c_flag = psr[3,1];
+    ie_flag = psr[4,1];
+    il = psr[8,4];
+    if (ie_flag) goto <ie_set>;
+    int_disable();
+    goto <ie_end>;
+<ie_set>
+    int_enable();
+<ie_end>
+}
+
+macro psrPack() {
+    psr[0,1] = n_flag;
+    psr[1,1] = z_flag;
+    psr[2,1] = v_flag;
+    psr[3,1] = c_flag;
+    psr[4,1] = ie_flag;
+    psr[8,4] = il;
+}
