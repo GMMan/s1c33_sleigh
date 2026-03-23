@@ -8,6 +8,8 @@ Features
 --------
 - Disassembly of all C33 PE instructions, including extended instructions
 - P-code implemented for all of the instructions
+- Custom pseudo-instructions added for two-register `xadd`, `xsub`, `xcmp`,
+  `xand`, `xoor`, and `xxor`
 
 TODOs
 -----
