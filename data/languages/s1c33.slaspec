@@ -639,7 +639,7 @@ DoubleImm5: imm5 is imm4_imm5l [ imm5=imm4_imm5l + 16; ] { local tmp:4 = imm5; e
 }
 
 :"ld.w" %sd,%rx_hi  is class=5 & op1=0 & op2=0 & sd_check=psr & rx_hi & sd {
-    sd = rx_hi;
+    psr = rx_hi;
     psrUnpack();
 }
 
@@ -657,7 +657,7 @@ DoubleImm5: imm5 is imm4_imm5l [ imm5=imm4_imm5l + 16; ] { local tmp:4 = imm5; e
 
 :"ld.w" %rx_lo,%ss      is class=5 & op1=1 & op2=0 & ss_check=psr & ss & rx_lo {
     psrPack();
-    rx_lo = ss;
+    rx_lo = psr;
 }
 
 :"ld.ub" %rx_lo,%rx_hi      is class=5 & op1=1 & op2=1 & rx_hi & rx_lo {
