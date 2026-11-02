@@ -2,4 +2,10 @@
 
 <processor_spec>
   <programcounter register="pc"/>
+  <context_data>
+    <!-- gcc33 GP. Default 0 matches small images; override if GP is elsewhere. -->
+    <tracked_set space="ram">
+      <set name="r8" val="0"/>
+    </tracked_set>
+  </context_data>
 </processor_spec>

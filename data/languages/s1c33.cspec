@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<!--
+  gcc33 / E0C33 Family C Compiler ABI (sm_33.pdf sections 6.5.3-6.5.5).
+
+  Arguments:  r12, r13, r14, r15, then stack (word-aligned, extra args at SP+4).
+  Return:     r10 (32-bit), r11:r10 (64-bit / double, r10=low).
+  Callee-saved: r0-r3 (pushn/popn), plus reserved global pointer r8.
+  Scratch:    r4-r7, r9 (ext33), r10-r15.
+
+  gcc33 reserves r8 as the global pointer; do not treat it as an argument.
+  The previous r6-r9 / r4 spec is preserved as compiler id "legacy".
+-->
 <compiler_spec>
   <data_organization>
     <machine_alignment value="4" />
@@ -18,31 +29,32 @@
       <entry size="4" alignment="4" />
       <entry size="8" alignment="8" />
     </size_alignment_map>
+    <default_pointer_alignment value="4" />
   </data_organization>
   <stackpointer register="sp" space="ram"/>
   <funcptr align="2"/>
-  <spacebase name="dp" register="r15" space="ram"/>
+  <spacebase name="gp" register="r8" space="ram"/>
   <global>
     <range space="ram"/>
-    <range space="dp"/>
+    <range space="gp"/>
   </global>
   <returnaddress>
     <varnode space="stack" offset="0" size="4"/>
   </returnaddress>
   <default_proto>
-    <prototype name="__cdecl" extrapop="4" stackshift="4">
+    <prototype name="__gcc33" extrapop="4" stackshift="4">
       <input>
         <pentry minsize="1" maxsize="4" extension="inttype">
-          <register name="r6"/>
+          <register name="r12"/>
         </pentry>
         <pentry minsize="1" maxsize="4" extension="inttype">
-          <register name="r7"/>
+          <register name="r13"/>
         </pentry>
         <pentry minsize="1" maxsize="4" extension="inttype">
-          <register name="r8"/>
+          <register name="r14"/>
         </pentry>
         <pentry minsize="1" maxsize="4" extension="inttype">
-          <register name="r9"/>
+          <register name="r15"/>
         </pentry>
         <pentry maxsize="500" minsize="1" align="4">
           <addr space="stack" offset="4"/>
@@ -50,10 +62,10 @@
       </input>
       <output killedbycall="true">
         <pentry minsize="1" maxsize="4">
-          <register name="r4"/>
+          <register name="r10"/>
         </pentry>
         <pentry minsize="5" maxsize="8">
-          <addr space="join" piece1="r5" piece2="r4"/>
+          <addr space="join" piece1="r11" piece2="r10"/>
         </pentry>
       </output>
       <unaffected>
@@ -63,15 +75,30 @@
         <register name="r1"/>
         <register name="r2"/>
         <register name="r3"/>
+        <register name="r8"/>
       </unaffected>
       <killedbycall>
+        <register name="r4"/>
         <register name="r5"/>
+        <register name="r6"/>
+        <register name="r7"/>
+        <register name="r9"/>
         <register name="r10"/>
         <register name="r11"/>
         <register name="r12"/>
         <register name="r13"/>
         <register name="r14"/>
+        <register name="r15"/>
       </killedbycall>
+      <likelytrash>
+        <register name="r4"/>
+        <register name="r5"/>
+        <register name="r6"/>
+        <register name="r7"/>
+        <register name="r9"/>
+        <register name="r10"/>
+        <register name="r11"/>
+      </likelytrash>
     </prototype>
   </default_proto>
 </compiler_spec>

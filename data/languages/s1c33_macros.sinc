@@ -32,8 +32,9 @@ macro subFlags(op1, op2) {
 
 
 macro adcOp(rd, s) {
+    local oldc = zext(c_flag);
     adcFlags(rd, s);
-    rd = rd + s + zext(c_flag);
+    rd = rd + s + oldc;
     resultFlags(rd);
 }
 
@@ -98,9 +99,12 @@ macro callOp(addr) {
 }
 
 macro callDOp(addr) {
-    delayslot(1);
+    # Delay slot is one 16-bit instruction (2 bytes). The saved return
+    # address is the instruction after that slot (PE core 5.14.2).
+    local ra:4 = inst_next + 2;
+    delayslot(2);
     sp = sp - 4;
-    *:4 sp = inst_next;
+    *:4 sp = ra;
     call addr;
 }
 
@@ -111,9 +115,10 @@ macro callIndOp(addr) {
 }
 
 macro callDIndOp(addr) {
-    delayslot(1);
+    local ra:4 = inst_next + 2;
+    delayslot(2);
     sp = sp - 4;
-    *:4 sp = inst_next;
+    *:4 sp = ra;
     call [addr];
 }
 
@@ -256,7 +261,7 @@ macro retOp() {
 }
 
 macro retdOp() {
-    delayslot(1);
+    delayslot(2);
     pc = * sp;
     sp = sp + 4;
     return [pc];
@@ -273,8 +278,9 @@ macro rrOp(rd, op) {
 }
 
 macro sbcOp(rd, s) {
+    local oldc = zext(c_flag);
     sbcFlags(rd, s);
-    rd = rd - s - zext(c_flag);
+    rd = rd - s - oldc;
     resultFlags(rd);
 }
 
