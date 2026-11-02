@@ -80,6 +80,8 @@ define token instr(16)
     # Class 6
     imm13=(0, 12)
     imm13s=(0, 12) signed
+
+    raw16=(0, 15)
 ;
 
 # For two ext instructions
@@ -107,6 +109,7 @@ attach variables [psr_vreg] [
 define pcodeop slp;
 define pcodeop halt;
 define pcodeop brk;
+define pcodeop undefined_insn;
 define pcodeop int;
 define pcodeop coproc_exec;
 define pcodeop coproc_load;
@@ -593,7 +596,7 @@ DoubleImm5: imm5 is imm4_imm5l [ imm5=imm4_imm5l + 16; ] { local tmp:4 = imm5; e
     sraOp(rx_lo, rx_hi);
 }
 
-:swap $rx_lo,%rx_hi     is class=4 & op1=4 & op2=2 & rx_hi & rx_lo {
+:swap %rx_lo,%rx_hi     is class=4 & op1=4 & op2=2 & rx_hi & rx_lo {
     rx_lo[24,8] = rx_hi[0,8];
     rx_lo[16,8] = rx_hi[8,8];
     rx_lo[8,8] = rx_hi[16,8];
@@ -758,3 +761,11 @@ DoubleImm5: imm5 is imm4_imm5l [ imm5=imm4_imm5l + 16; ] { local tmp:4 = imm5; e
 }
 
 @include "s1c33_ext.sinc"
+
+# Least-specific 16-bit fallback. Constrained encodings win, so this only
+# matches padding and other non-PE halfwords. Without it the decompiler
+# logs "Unable to resolve constructor" and can abort a function.
+:und    is raw16 {
+    undefined_insn();
+    return [pc];
+}

@@ -144,82 +144,82 @@ pushnHead: is rx_lo=15 & pushnR15 {
 }
 
 popnR0: is epsilon {
-    stackPush(r0);
+    stackPop(r0);
 }
 
 popnR1: is epsilon & popnR0 {
     build popnR0;
-    stackPush(r1);
+    stackPop(r1);
 }
 
 popnR2: is epsilon & popnR1 {
     build popnR1;
-    stackPush(r2);
+    stackPop(r2);
 }
 
 popnR3: is epsilon & popnR2 {
     build popnR2;
-    stackPush(r3);
+    stackPop(r3);
 }
 
 popnR4: is epsilon & popnR3 {
     build popnR3;
-    stackPush(r4);
+    stackPop(r4);
 }
 
 popnR5: is epsilon & popnR4 {
     build popnR4;
-    stackPush(r5);
+    stackPop(r5);
 }
 
 popnR6: is epsilon & popnR5 {
     build popnR5;
-    stackPush(r6);
+    stackPop(r6);
 }
 
 popnR7: is epsilon & popnR6 {
     build popnR6;
-    stackPush(r7);
+    stackPop(r7);
 }
 
 popnR8: is epsilon & popnR7 {
     build popnR7;
-    stackPush(r8);
+    stackPop(r8);
 }
 
 popnR9: is epsilon & popnR8 {
     build popnR8;
-    stackPush(r9);
+    stackPop(r9);
 }
 
 popnR10: is epsilon & popnR9 {
     build popnR9;
-    stackPush(r10);
+    stackPop(r10);
 }
 
 popnR11: is epsilon & popnR10 {
     build popnR10;
-    stackPush(r11);
+    stackPop(r11);
 }
 
 popnR12: is epsilon & popnR11 {
     build popnR11;
-    stackPush(r12);
+    stackPop(r12);
 }
 
 popnR13: is epsilon & popnR12 {
     build popnR12;
-    stackPush(r13);
+    stackPop(r13);
 }
 
 popnR14: is epsilon & popnR13 {
     build popnR13;
-    stackPush(r14);
+    stackPop(r14);
 }
 
 popnR15: is epsilon & popnR14 {
     build popnR14;
-    stackPush(r15);
+    stackPop(r15);
 }
 
 popnHead: is rx_lo=0 & popnR0 {
